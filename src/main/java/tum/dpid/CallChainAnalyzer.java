@@ -22,19 +22,24 @@ public class CallChainAnalyzer {
         Map<String, Set<String>> callGraph = buildCallGraph(methodMap);
 
         for (String targetMethod : DB_METHODS) {
-            System.out.println("Call chain for method: " + targetMethod);
+            //System.out.println("Call chain for method: " + targetMethod);
             Set<String> visited = new HashSet<>();
             List<String> callChain = new ArrayList<>();
-            traceCallChain(targetMethod, callGraph, visited, callChain);
+            traceCallChainInOrder(targetMethod, callGraph, new HashSet<>(), callChain, methodMap);
 
             if (callChain.isEmpty()) {
                 System.out.println("No calls found for method: " + targetMethod);
             } else {
                 for (String method : callChain) {
-                    System.out.println(method);
+                    //System.out.println(method);
                 }
             }
+            //System.out.println();
+
+            System.out.println("Call graph for method: " + targetMethod);
+            drawCallGraph(targetMethod, callGraph, 0, new HashSet<>());
             System.out.println();
+
         }
     }
 
@@ -97,17 +102,37 @@ public class CallChainAnalyzer {
         return callGraph;
     }
 
-    private static void traceCallChain(String methodName, Map<String, Set<String>> callGraph, Set<String> visited, List<String> callChain) {
+    private static void traceCallChainInOrder(String methodName, Map<String, Set<String>> callGraph, Set<String> visited, List<String> callChain, Map<String, MethodDeclaration> methodMap) {
         if (!visited.add(methodName)) {
             return;
         }
         callChain.add(methodName);
+        Set<String> callees = callGraph.get(methodName);
+        if (callees != null) {
+            for (String callee : callees) {
+                traceCallChainInOrder(callee, callGraph, visited, callChain, methodMap);
+            }
+        }
+    }
+
+    private static void drawCallGraph(String methodName, Map<String, Set<String>> callGraph, int level, Set<String> visited) {
+        if (!visited.add(methodName)) {
+            return;
+        }
+        printIndented(methodName, level);
         Set<String> callers = callGraph.get(methodName);
         if (callers != null) {
             for (String caller : callers) {
-                traceCallChain(caller, callGraph, visited, callChain);
+                drawCallGraph(caller, callGraph, level + 1, visited);
             }
         }
+    }
+
+    private static void printIndented(String methodName, int level) {
+        for (int i = 0; i < level; i++) {
+            System.out.print("    ");
+        }
+        System.out.println(methodName);
     }
 
     static class MethodCollector extends ASTVisitor {
