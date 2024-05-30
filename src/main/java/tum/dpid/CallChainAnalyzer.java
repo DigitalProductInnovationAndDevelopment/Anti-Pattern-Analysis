@@ -21,14 +21,12 @@ public class CallChainAnalyzer {
         Map<String, MethodDeclaration> methodMap = collectMethods(projectDirectory);
         Map<String, Set<String>> callGraph = buildCallGraph(methodMap);
 
-        // Trace call chains for DB_METHODS
         for (String targetMethod : DB_METHODS) {
             System.out.println("Call chain for method: " + targetMethod);
             Set<String> visited = new HashSet<>();
             List<String> callChain = new ArrayList<>();
             traceCallChain(targetMethod, callGraph, visited, callChain);
 
-            // Print the call chain
             if (callChain.isEmpty()) {
                 System.out.println("No calls found for method: " + targetMethod);
             } else {
