@@ -3,11 +3,11 @@ package tum.dpid;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
 
 public class App {
     public static void main(String[] args) {
         String projectPath = "../fromItestra/LoopAntiPattern"; // Specific project directory
-        //"C:/Users/cagat/OneDrive/Belgeler/GitHub/fromItestra/LoopAntiPattern";
         List<File> javaFiles = listJavaFiles(new File(projectPath));
 
         ASTAnalyzer analyzer = new ASTAnalyzer();
@@ -17,6 +17,16 @@ public class App {
             analyzer.analyzeFile(file.getAbsolutePath());
         }
         System.out.println("Analysis complete!");
+
+        Scanner scanner = new Scanner(System.in);
+        System.out.print("Enter the method to start call chain detection (e.g., ClassName.methodName): ");
+        String startMethod = scanner.nextLine();
+        List<String> callChain = analyzer.findCallChain(startMethod);
+
+        System.out.println("Call chain for method " + startMethod + ":");
+        for (String method : callChain) {
+            System.out.println(method);
+        }
     }
 
     private static List<File> listJavaFiles(File root) {

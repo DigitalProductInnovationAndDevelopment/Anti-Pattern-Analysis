@@ -1,11 +1,13 @@
 package tum.dpid;
 
 import org.eclipse.jdt.core.dom.*;
+
 import java.io.*;
-import org.eclipse.jdt.core.dom.AST;
-import org.eclipse.jdt.core.dom.ASTParser;
+import java.util.*;
 
 public class ASTAnalyzer {
+    private final Map<String, List<String>> callGraph = new HashMap<>();
+
     public void analyzeFile(String filePath) {
         String source = readFileToString(filePath);
         ASTParser parser = ASTParser.newParser(AST.JLS_Latest);
@@ -21,48 +23,45 @@ public class ASTAnalyzer {
     }
 
     class MethodVisitor extends ASTVisitor {
-        private boolean isInLoop = false;
+        private String currentClassName = null;
+        private String currentMethodName = null;
 
-        public boolean visit(ForStatement node) {
-            System.out.println("For loop");
-            isInLoop = true;
-            node.getBody().accept(this);
-            isInLoop = false;
-            return false; // Prevents default traversal to avoid redundant checks
+        @Override
+        public boolean visit(TypeDeclaration node) {
+            currentClassName = node.getName().getIdentifier();
+            return super.visit(node);
         }
 
-        public boolean visit(WhileStatement node) {
-            System.out.println("While loop");
-            isInLoop = true;
-            node.getBody().accept(this);
-            isInLoop = false;
-            return false;
-        }
-
+        @Override
         public boolean visit(MethodDeclaration node) {
-            if (node.modifiers().stream().anyMatch(modifier -> modifier instanceof Annotation &&
-                    ((Annotation) modifier).getTypeName().getFullyQualifiedName().equals("Transactional"))) {
-                String methodName = node.getName().getIdentifier();
-                int lineNumber = ((CompilationUnit) node.getRoot()).getLineNumber(node.getStartPosition());
-                System.out.println("@Transactional method detected: " + methodName + " at line " + lineNumber);
-            }
-            return true; // Continue visiting child nodes
+            currentMethodName = node.getName().getIdentifier();
+            String fullMethodName = currentClassName + "." + currentMethodName;
+            callGraph.putIfAbsent(fullMethodName, new ArrayList<>());
+            System.out.println("Detected method: " + fullMethodName);
+            return super.visit(node);
         }
 
+        @Override
         public boolean visit(MethodInvocation node) {
-            String methodName = node.getName().getIdentifier();
-            if (methodName.equals("executeQuery") || methodName.equals("callService")) {
-                String context = isInLoop ? "inside a loop" : "outside loop";
-                System.out.println("Potential performance issue: " + methodName + " " + context + " at line " +
-                        ((CompilationUnit) node.getRoot()).getLineNumber(node.getStartPosition()));
+            if (currentClassName != null && currentMethodName != null) {
+                String fullMethodName = currentClassName + "." + currentMethodName;
+                String invokedMethodName = node.getName().getIdentifier();
+                IMethodBinding binding = node.resolveMethodBinding();
+                if (binding != null) {
+                    ITypeBinding declaringClass = binding.getDeclaringClass();
+                    if (declaringClass != null) {
+                        String invokedFullMethodName = declaringClass.getName() + "." + invokedMethodName;
+                        callGraph.get(fullMethodName).add(invokedFullMethodName);
+                        System.out.println("Detected call from " + fullMethodName + " to " + invokedFullMethodName);
+                    }
+                }
             }
-            if (methodName.equals("stream")) {
-                String context = isInLoop ? "inside a loop" : "outside loop";
-                System.out.println("Stream operation detected in " + context + " at line " +
-                        ((CompilationUnit) node.getRoot()).getLineNumber(node.getStartPosition()));
-            }
-            return true;
+            return super.visit(node);
         }
+    }
+
+    public Map<String, List<String>> getCallGraph() {
+        return callGraph;
     }
 
     private String readFileToString(String filePath) {
@@ -79,5 +78,24 @@ public class ASTAnalyzer {
             e.printStackTrace();
         }
         return fileData.toString();
+    }
+
+    public List<String> findCallChain(String startMethod) {
+        List<String> callChain = new ArrayList<>();
+        findCallChainHelper(startMethod, new HashSet<>(), callChain);
+        return callChain;
+    }
+
+    private void findCallChainHelper(String method, Set<String> visited, List<String> callChain) {
+        if (visited.contains(method)) {
+            return;
+        }
+        visited.add(method);
+        for (String caller : callGraph.keySet()) {
+            if (callGraph.get(caller).contains(method)) {
+                callChain.add(caller);
+                findCallChainHelper(caller, visited, callChain);
+            }
+        }
     }
 }
