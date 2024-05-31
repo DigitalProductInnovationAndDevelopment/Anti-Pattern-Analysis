@@ -18,7 +18,7 @@ diverse, inclusive, and healthy community.
 
 Branch names should be descriptive and follow a consistent structure according to task type:
 
-- feature/`<name>`.`<feature-name>`
+- feature/`<name>`-`<feature-name>`
 - fix/`<name>`-`<feature-name>`
 - experiment/`<name>`-`<feature-name>`
 - refactor/`<name>`-`<feature-name>`
