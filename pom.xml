@@ -30,8 +30,54 @@
         <artifactId>org.eclipse.jdt.core</artifactId>
         <version>3.37.0</version>
       </dependency>
+    <!-- JGraphT for graph creation -->
+    <dependency>
+      <groupId>org.jgrapht</groupId>
+      <artifactId>jgrapht-core</artifactId>
+      <version>1.5.1</version>
+    </dependency>
+    <!-- JGraphT-ext for graph visualisation -->
+    <dependency>
+      <groupId>org.jgrapht</groupId>
+      <artifactId>jgrapht-ext</artifactId>
+      <version>1.5.1</version>
+    </dependency>
 
+    <dependency>
+      <groupId>guru.nidi</groupId>
+      <artifactId>graphviz-java</artifactId>
+      <version>0.18.1</version>
+    </dependency>
+
+<!--   Eclipse JDT UI -->
+<!--    <dependency>-->
+<!--      <groupId>org.eclipse.jdt</groupId>-->
+<!--      <artifactId>org.eclipse.jdt.ui</artifactId>-->
+<!--      <version>3.26.0</version>-->
+<!--    </dependency>-->
+
+<!--   Eclipse Core Resources -->
+<!--    <dependency>-->
+<!--      <groupId>org.eclipse.core</groupId>-->
+<!--      <artifactId>org.eclipse.core.resources</artifactId>-->
+<!--      <version>3.7.100</version>-->
+<!--    </dependency>-->
+
+<!--     Eclipse Core Runtime &ndash-->
+<!--    <dependency>-->
+<!--      <groupId>org.eclipse.core</groupId>-->
+<!--      <artifactId>org.eclipse.core.runtime</artifactId>-->
+<!--      <version>3.20.0</version>-->
+<!--    </dependency>-->
   </dependencies>
+
+<!--  <repositories>-->
+<!--    <repository>-->
+<!--      <id>eclipse-p2</id>-->
+<!--      <layout>p2</layout>-->
+<!--      <url>http://download.eclipse.org/releases/latest/</url>-->
+<!--    </repository>-->
+<!--  </repositories>-->
 
   <build>
     <pluginManagement><!-- lock down plugins versions to avoid using Maven defaults (may be moved to parent pom) -->

@@ -66,11 +66,9 @@ public class DeclarationVisitor extends ASTVisitor {
     public boolean visit(MethodInvocation node) {
         String methodName = node.getName().getIdentifier();
         if (methodName.equals("stream")) {
-            System.out.println("Found stream() at line " + node.getStartPosition() + " expression is " + node.getExpression());
+            System.out.println("Found stream() expression is " + node.getExpression());
         }
         return super.visit(node);
     }
-
-
 
 }

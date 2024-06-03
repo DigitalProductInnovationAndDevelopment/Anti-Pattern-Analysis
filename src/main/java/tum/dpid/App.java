@@ -3,6 +3,7 @@ package tum.dpid;
 import tum.dpid.jdt.Parser;
 
 import java.io.File;
+import java.io.IOException;
 
 /**
  * Hello world!
@@ -10,7 +11,8 @@ import java.io.File;
  */
 public class App 
 {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
+
         //to be parsed project path
         String directoryPath = "../../fromItestra/LoopAntiPattern";
         File directory = new File(directoryPath);
@@ -20,5 +22,6 @@ public class App
             return;
         }
         Parser.processJavaFiles(directory);
+        Parser.visualiseGraph();
     }
 }
