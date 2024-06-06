@@ -31,7 +31,7 @@ public class AntiPatternDetector {
     private static final List<String> DB_METHODS = List.of("flush", "save", "update", "persist", "remove", "find");
 
     public static void main(String[] args) {
-        String projectDirectoryPath = "/Users/melisuensal/Desktop/LoopAntiPattern/src/main/java/com/example/LoopAntiPattern";
+        String projectDirectoryPath = "../fromItestra/LoopAntiPattern";
 
         File projectDirectory = new File(projectDirectoryPath);
         if (!projectDirectory.exists() || !projectDirectory.isDirectory()) {

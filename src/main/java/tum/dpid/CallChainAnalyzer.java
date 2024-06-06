@@ -5,12 +5,15 @@ import java.util.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+
 public class CallChainAnalyzer {
 
-    private static final List<String> DB_METHODS = List.of("flush", "save", "update", "persist", "remove", "find");
+    private static final List<String> DB_METHODS = List.of("flush", "save", "update", "persist", "remove", "find",
+            "selectById", "selectExistingById", "delete",
+            "selectByArticleNumber", "saveWithoutFlush", "merge", "selectFrom");
 
     public static void main(String[] args) {
-        String projectDirectoryPath = "/Users/melisuensal/Desktop/LoopAntiPattern/src/main/java/com/example/LoopAntiPattern";
+        String projectDirectoryPath = "../fromItestra/LoopAntiPattern";
 
         File projectDirectory = new File(projectDirectoryPath);
         if (!projectDirectory.exists() || !projectDirectory.isDirectory()) {
@@ -22,25 +25,12 @@ public class CallChainAnalyzer {
         Map<String, Set<String>> callGraph = buildCallGraph(methodMap);
 
         for (String targetMethod : DB_METHODS) {
-            //System.out.println("Call chain for method: " + targetMethod);
-            Set<String> visited = new HashSet<>();
-            List<String> callChain = new ArrayList<>();
-            traceCallChainInOrder(targetMethod, callGraph, new HashSet<>(), callChain, methodMap);
-
-            if (callChain.isEmpty()) {
-                System.out.println("No calls found for method: " + targetMethod);
-            } else {
-                for (String method : callChain) {
-                    //System.out.println(method);
-                }
-            }
-            //System.out.println();
-
             System.out.println("Call graph for method: " + targetMethod);
             drawCallGraph(targetMethod, callGraph, 0, new HashSet<>());
             System.out.println();
-
         }
+
+        checkForDatabaseCallsInLoops(methodMap, callGraph);
     }
 
     private static Map<String, MethodDeclaration> collectMethods(File projectDirectory) {
@@ -102,19 +92,6 @@ public class CallChainAnalyzer {
         return callGraph;
     }
 
-    private static void traceCallChainInOrder(String methodName, Map<String, Set<String>> callGraph, Set<String> visited, List<String> callChain, Map<String, MethodDeclaration> methodMap) {
-        if (!visited.add(methodName)) {
-            return;
-        }
-        callChain.add(methodName);
-        Set<String> callees = callGraph.get(methodName);
-        if (callees != null) {
-            for (String callee : callees) {
-                traceCallChainInOrder(callee, callGraph, visited, callChain, methodMap);
-            }
-        }
-    }
-
     private static void drawCallGraph(String methodName, Map<String, Set<String>> callGraph, int level, Set<String> visited) {
         if (!visited.add(methodName)) {
             return;
@@ -133,6 +110,118 @@ public class CallChainAnalyzer {
             System.out.print("    ");
         }
         System.out.println(methodName);
+    }
+
+    private static void checkForDatabaseCallsInLoops(Map<String, MethodDeclaration> methodMap, Map<String, Set<String>> callGraph) {
+        for (MethodDeclaration method : methodMap.values()) {
+            method.accept(new ASTVisitor() {
+                @Override
+                public boolean visit(ForStatement node) {
+                    System.out.println("For statement visited.");
+                    checkMethodInvocationsInLoop(node.getBody(), methodMap, callGraph);
+                    return super.visit(node);
+                }
+
+                @Override
+                public boolean visit(WhileStatement node) {
+                    System.out.println("While statement visited.");
+                    checkMethodInvocationsInLoop(node.getBody(), methodMap, callGraph);
+                    return super.visit(node);
+                }
+
+                @Override
+                public boolean visit(DoStatement node) {
+                    System.out.println("Do-While statement visited.");
+                    checkMethodInvocationsInLoop(node.getBody(), methodMap, callGraph);
+                    return super.visit(node);
+                }
+
+                @Override
+                public boolean visit(EnhancedForStatement node) {
+                    System.out.println("EnhancedForStatement statement visited.");
+                    checkMethodInvocationsInLoop(node.getBody(), methodMap, callGraph);
+                    return super.visit(node);
+                }
+
+                @Override
+                public boolean visit(LambdaExpression node) {
+                    System.out.println("Lambda statement visited.");
+                    checkMethodInvocationsInLoop(node.getBody(), methodMap, callGraph);
+                    return super.visit(node);
+                }
+
+                @Override
+                public boolean visit(MethodInvocation node) {
+                    // Check for stream method calls like map, filter, etc.
+                    if (node.getName().getIdentifier().equals("map") || node.getName().getIdentifier().equals("forEach") || node.getName().getIdentifier().equals("stream")) {
+                        System.out.println("Stream-related method visited: " + node.getName().getIdentifier());
+                        node.accept(new ASTVisitor() {
+                            @Override
+                            public boolean visit(LambdaExpression lambdaExpression) {
+                                System.out.println("Lambda statement visited inside stream operation.");
+                                checkMethodInvocationsInLoop(lambdaExpression.getBody(), methodMap, callGraph);
+                                return super.visit(lambdaExpression);
+                            }
+
+                            @Override
+                            public boolean visit(MethodInvocation innerNode) {
+                                System.out.println("MethodInvocation inside lambda visited: " + innerNode.getName().getIdentifier());
+                                String methodName = innerNode.getName().getIdentifier();
+                                if (DB_METHODS.contains(methodName)) {
+                                    reportAntiPattern(innerNode);
+                                } else if (methodMap.containsKey(methodName)) {
+                                    System.out.println("Tracing method: " + methodName);
+                                    traceMethodCallsInLoop(methodName, methodMap, callGraph, new HashSet<>(), innerNode);
+                                }
+                                return super.visit(innerNode);
+                            }
+                        });
+                    }
+                    return super.visit(node);
+                }
+            });
+        }
+    }
+
+    private static void checkMethodInvocationsInLoop(ASTNode loopBody, Map<String, MethodDeclaration> methodMap, Map<String, Set<String>> callGraph) {
+        loopBody.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(MethodInvocation node) {
+                String methodName = node.getName().getIdentifier();
+                System.out.println("MethodInvocation visited: " + methodName);
+                if (DB_METHODS.contains(methodName)) {
+                    reportAntiPattern(node);
+                } else if (methodMap.containsKey(methodName)) {
+                    System.out.println("Tracing method: " + methodName);
+                    traceMethodCallsInLoop(methodName, methodMap, callGraph, new HashSet<>(), node);
+                }
+                return super.visit(node);
+            }
+        });
+    }
+
+    private static void traceMethodCallsInLoop(String methodName, Map<String, MethodDeclaration> methodMap, Map<String, Set<String>> callGraph, Set<String> visited, MethodInvocation originalInvocation) {
+        if (!visited.add(methodName)) {
+            return;
+        }
+        Set<String> callees = callGraph.get(methodName);
+        if (callees != null) {
+            for (String callee : callees) {
+                System.out.println("Callee: " + callee);
+                if (DB_METHODS.contains(callee)) {
+                    System.out.println("DB method detected in call chain: " + callee);
+                    reportAntiPattern(originalInvocation);
+                } else if (methodMap.containsKey(callee)) {
+                    traceMethodCallsInLoop(callee, methodMap, callGraph, visited, originalInvocation);
+                }
+            }
+        }
+    }
+
+    private static void reportAntiPattern(MethodInvocation methodInvocation) {
+        System.out.println("Anti-pattern detected: " + methodInvocation.getName().getIdentifier() +
+                " call inside a loop at line " +
+                ((CompilationUnit) methodInvocation.getRoot()).getLineNumber(methodInvocation.getStartPosition()));
     }
 
     static class MethodCollector extends ASTVisitor {
