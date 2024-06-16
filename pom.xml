@@ -24,7 +24,65 @@
       <version>4.13.1</version>
       <scope>test</scope>
     </dependency>
+
+    <!--  http://spoon.gforge.inria.fr/ -->
+    <dependency>
+      <groupId>fr.inria.gforge.spoon</groupId>
+      <artifactId>spoon-core</artifactId>
+
+      <version>10.4.1</version>
+    </dependency>
+
+    <!-- sootup all module dependency (remove unnecessary later)-->
+
+    <dependency>
+      <groupId>org.soot-oss</groupId>
+      <artifactId>sootup.core</artifactId>
+      <version>1.2.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.soot-oss</groupId>
+      <artifactId>sootup.java.core</artifactId>
+      <version>1.2.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.soot-oss</groupId>
+      <artifactId>sootup.java.sourcecode</artifactId>
+      <version>1.2.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.soot-oss</groupId>
+      <artifactId>sootup.java.bytecode</artifactId>
+      <version>1.2.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.soot-oss</groupId>
+      <artifactId>sootup.jimple.parser</artifactId>
+      <version>1.2.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.soot-oss</groupId>
+      <artifactId>sootup.callgraph</artifactId>
+      <version>1.2.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.soot-oss</groupId>
+      <artifactId>sootup.analysis</artifactId>
+      <version>1.2.0</version>
+    </dependency>
+
   </dependencies>
+
+  <repositories>
+    <repository>
+      <id>jitpack.io</id>
+      <url>https://jitpack.io</url>
+    </repository>
+    <repository>
+      <id>/maven.google.com</id>
+      <url>https://maven.google.com</url>
+    </repository>
+  </repositories>
 
   <build>
     <pluginManagement><!-- lock down plugins versions to avoid using Maven defaults (may be moved to parent pom) -->
