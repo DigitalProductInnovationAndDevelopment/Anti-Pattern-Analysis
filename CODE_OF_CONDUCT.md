@@ -1,5 +1,4 @@
-
-# Contributor Covenant Code of Conduct
+# Code of Conduct and Commit Guidelines
 
 ## Our Pledge
 
@@ -13,62 +12,77 @@ identity and orientation.
 We pledge to act and interact in ways that contribute to an open, welcoming,
 diverse, inclusive, and healthy community.
 
-## Our Standards
+## Branch Naming Conventions
 
-Examples of behavior that contributes to a positive environment for our
-community include:
+### Structure
 
-* Demonstrating empathy and kindness toward other people
-* Being respectful of differing opinions, viewpoints, and experiences
-* Giving and gracefully accepting constructive feedback
-* Accepting responsibility and apologizing to those affected by our mistakes,
-  and learning from the experience
-* Focusing on what is best not just for us as individuals, but for the overall
-  community
+Branch names should be descriptive and follow a consistent structure according to task type:
 
-Examples of unacceptable behavior include:
+- feature/`<name>`-`<feature-name>`
+- fix/`<name>`-`<feature-name>`
+- experiment/`<name>`-`<feature-name>`
+- refactor/`<name>`-`<feature-name>`
 
-* The use of sexualized language or imagery, and sexual attention or advances of
-  any kind
-* Trolling, insulting or derogatory comments, and personal or political attacks
-* Public or private harassment
-* Publishing others' private information, such as a physical or email address,
-  without their explicit permission
-* Other conduct which could reasonably be considered inappropriate in a
-  professional setting
+## Commit Message Guidelines
 
-## Enforcement Responsibilities
+### Structure
 
-Community leaders are responsible for clarifying and enforcing our standards of
-acceptable behavior and will take appropriate and fair corrective action in
-response to any behavior that they deem inappropriate, threatening, offensive,
-or harmful.
+Each commit message should consist of three parts:
 
-Community leaders have the right and responsibility to remove, edit, or reject
-comments, commits, code, wiki edits, issues, and other contributions that are
-not aligned to this Code of Conduct, and will communicate reasons for moderation
-decisions when appropriate.
+1. **Header**
+2. **Body** (optional)
+3. **Footer** (optional)
 
-## Scope
+### Header
 
-This Code of Conduct applies within all community spaces, and also applies when
-an individual is officially representing the community in public spaces.
-Examples of representing our community include using an official email address,
-posting via an official social media account, or acting as an appointed
-representative at an online or offline event.
+The header should be a single line that includes a type, an optional scope, and a subject. The header should look like
+this:
 
-## Enforcement
+```
+<type>(<scope>): <subject>
+<BLANK LINE>
+<body>
+<BLANK LINE>
+<footer>
+```
 
-Instances of abusive, harassing, or otherwise unacceptable behavior may be
-reported to the community leaders responsible for enforcement.
-All complaints will be reviewed and investigated promptly and fairly.
+- **type**: The type of change being committed (see below for accepted types)
+- **scope**: The scope of the change (e.g., component or file name)
+- **subject**: A brief description of the change
 
-All community leaders are obligated to respect the privacy and security of the
-reporter of any incident.
+### Accepted Types
 
-## Attribution
+- **feat**: A new feature
+- **fix**: A bug fix
+- **docs**: Documentation changes
+- **style**: Changes that do not affect the meaning of the code (white-space, formatting, missing semi-colons, etc.)
+- **refactor**: A code change that neither fixes a bug nor adds a feature
+- **perf**: A code change that improves performance
+- **test**: Adding missing or correcting existing tests
+- **build**: Changes that affect the build system or external dependencies (example scopes: gulp, broccoli, npm)
+- **ci**: Changes to our CI configuration files and scripts (example scopes: Travis, Circle, BrowserStack, SauceLabs)
+- **chore**: Other changes that don't modify src or test files
+- **revert**: Reverts a previous commit
 
-This Code of Conduct is adapted from the [Contributor Covenant](https://www.contributor-covenant.org/),
-version 2.1, available at
-https://www.contributor-covenant.org/version/2/1/code_of_conduct.html.
+### Subject
 
+- Use the imperative mood in the subject line (e.g., change, not changed or changes)
+- Do not capitalize the first letter
+- Do not add a period (.) at the end
+- Keep the subject line to 50 characters or less
+
+### Body
+
+- Use the body to explain what and why vs. how
+- Include motivation for the change and contrast with the previous behavior
+- Use bullet points for clarity if necessary
+
+### Footer
+
+- Use the footer to reference issue trackers (e.g., "Closes #1234")
+- Include breaking changes in the footer with the prefix BREAKING CHANGE
+
+## Additional Resources
+
+- [Conventional Commits](https://www.conventionalcommits.org/)
+- [Git Branching Naming Convention](https://nvie.com/posts/a-successful-git-branching-model/)
