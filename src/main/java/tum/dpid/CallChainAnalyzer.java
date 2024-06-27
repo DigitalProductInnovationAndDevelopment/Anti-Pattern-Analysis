@@ -1,6 +1,8 @@
 package tum.dpid;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eclipse.jdt.core.dom.*;
+import tum.dpid.config.AnalyzerConfig;
 
 import java.io.File;
 import java.io.IOException;
@@ -11,10 +13,22 @@ import java.util.*;
 
 public class CallChainAnalyzer {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
+
+        ObjectMapper mapper = new ObjectMapper();
+        AnalyzerConfig config;
+
+        try {
+            //config file path will be read as a cmd line argument after building this tool as a jar application
+            config = mapper.readValue(new File("config.json"), AnalyzerConfig.class);
+        } catch (IOException e) {
+            System.out.println("Error reading config file:\n" + e.getMessage());
+            System.exit(1);
+            return; //This is added to prevent "variable might not be initialized" warnings. This line is unreachable
+        }
 
         // find and collect methods under repository folder to create a target list
-        String directoryPath = "../LoopAntiPattern/src/main/java/com/example/LoopAntiPattern/data/repository";
+        String directoryPath = config.getRepositoryDirectory();
         Path dirPath = Paths.get(directoryPath);
         List<String> DB_METHODS = new ArrayList<>();
 
@@ -25,13 +39,13 @@ public class CallChainAnalyzer {
                     .toList();
 
             for (Path javaFile : javaFiles) {
-                DB_METHODS.addAll(extractMethodNames(javaFile));
+                DB_METHODS.addAll(extractMethodNames(javaFile, config.getExcludedClasses(), config.getExcludedMethods()));
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        String projectDirectoryPath = "../LoopAntiPattern/src";
+        String projectDirectoryPath = config.getProjectDirectory();
 
         File projectDirectory = new File(projectDirectoryPath);
         if (!projectDirectory.exists() || !projectDirectory.isDirectory()) {
@@ -39,7 +53,7 @@ public class CallChainAnalyzer {
             return;
         }
 
-        Map<String, MethodDeclaration> methodMap = collectMethods(projectDirectory);
+        Map<String, MethodDeclaration> methodMap = collectMethods(projectDirectory, config.getExcludedMethods());
         Map<String, List<String>> callGraph = buildCallGraph(methodMap);
 
         for (String targetMethod : DB_METHODS) {
@@ -57,24 +71,34 @@ public class CallChainAnalyzer {
         }
     }
 
-    private static List<String> extractMethodNames(Path javaFilePath) throws IOException {
+    private static List<String> extractMethodNames(Path javaFilePath, List<String> excludedClasses, List<String> excludedMethods) throws IOException {
+        String className = javaFilePath.getFileName().toString();
+        if(excludedClasses.contains(className)) {
+            return Collections.emptyList();
+        }
         String content = new String(Files.readAllBytes(javaFilePath));
         ASTParser parser = ASTParser.newParser(AST.JLS8);
         parser.setSource(content.toCharArray());
         parser.setKind(ASTParser.K_COMPILATION_UNIT);
 
         final CompilationUnit cu = (CompilationUnit) parser.createAST(null);
-        MethodNameVisitor visitor = new MethodNameVisitor();
+        MethodNameVisitor visitor = new MethodNameVisitor(excludedMethods);
         cu.accept(visitor);
         return visitor.getMethodNames();
     }
 
     static class MethodNameVisitor extends ASTVisitor {
         private final List<String> methodNames = new ArrayList<>();
+        private final List<String> excludedMethods;
 
+        public MethodNameVisitor(List<String> excludedMethods) {
+            this.excludedMethods = excludedMethods;
+        }
         @Override
         public boolean visit(MethodDeclaration node) {
-            methodNames.add(node.getName().getIdentifier());
+            if(!excludedMethods.contains(node.getName().getIdentifier())){
+                methodNames.add(node.getName().getIdentifier());
+            }
             return super.visit(node);
         }
 
@@ -83,7 +107,7 @@ public class CallChainAnalyzer {
         }
     }
 
-    private static Map<String, MethodDeclaration> collectMethods(File projectDirectory) {
+    private static Map<String, MethodDeclaration> collectMethods(File projectDirectory, List<String> excludedMethods) throws IOException {
         Map<String, MethodDeclaration> methodMap = new HashMap<>();
         List<File> javaFiles = getJavaFiles(projectDirectory);
 
@@ -95,7 +119,7 @@ public class CallChainAnalyzer {
                 parser.setKind(ASTParser.K_COMPILATION_UNIT);
 
                 CompilationUnit cu = (CompilationUnit) parser.createAST(null);
-                cu.accept(new MethodCollector(methodMap));
+                cu.accept(new MethodCollector(methodMap, excludedMethods));
             } catch (IOException e) {
                 System.err.println("Error reading file: " + javaFile.getName());
                 e.printStackTrace();
@@ -196,14 +220,18 @@ public class CallChainAnalyzer {
 
     static class MethodCollector extends ASTVisitor {
         private final Map<String, MethodDeclaration> methodMap;
+        private final List<String> excludedMethods;
 
-        MethodCollector(Map<String, MethodDeclaration> methodMap) {
+        MethodCollector(Map<String, MethodDeclaration> methodMap, List<String> excludedMethods) {
             this.methodMap = methodMap;
+            this.excludedMethods = excludedMethods;
         }
 
         @Override
         public boolean visit(MethodDeclaration node) {
-            methodMap.put(node.getName().toString(), node);
+            if(!excludedMethods.contains(node.getName().toString())) {
+                methodMap.put(node.getName().toString(), node);
+            }
             return super.visit(node);
         }
     }
