@@ -1,0 +1,10 @@
+{
+  "projectDirectory": "../fromItestra/LoopAntiPattern/LoopAntiPattern/src",
+  "repositoryDirectory": "../fromItestra/LoopAntiPattern/LoopAntiPattern/src/main/java/com/example/LoopAntiPattern",
+  "excludedClasses": ["ExcludeThis.java", "ExcludeThat.java"],
+  "excludedMethods": ["someMethod"]
+}
+
+//,"ProductRepository.java","ProductService.java"
+//"repositoryDirectory": "../fromItestra/LoopAntiPattern/LoopAntiPattern/src/main/java/com/example/LoopAntiPattern/data/repository",
+//"repositoryDirectory": "../fromItestra/LoopAntiPattern/LoopAntiPattern/src/main/java/com/example/LoopAntiPattern/service",
