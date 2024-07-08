@@ -150,17 +150,12 @@ public class CallChainAnalyzer {
         Map<String, List<String>> callGraph = new HashMap<>();
 
         for (MethodDeclaration method : methodMap.values()) {
-            if(method.getName().toString().equals("updateProducts"))
-            {
-                System.out.println("");
-            }
             method.accept(new ASTVisitor() {
                 @Override
                 public boolean visit(MethodInvocation node) {
                     String caller = method.getName().toString();
                     String callee = node.getName().toString();
                     callGraph.computeIfAbsent(callee, k -> new ArrayList<>()).add(caller);
-
                     return super.visit(node);
                 }
 
@@ -172,11 +167,58 @@ public class CallChainAnalyzer {
                             String caller = method.getName().toString();
                             String callee = lambdaNode.getName().toString();
                             callGraph.computeIfAbsent(callee, k -> new ArrayList<>()).add(caller);
-
                             return super.visit(lambdaNode);
                         }
-                    });
 
+                        @Override
+                        public boolean visit(ExpressionMethodReference methodReferenceNode) {
+                            String caller = method.getName().toString();
+                            String callee = methodReferenceNode.getName().toString();
+                            callGraph.computeIfAbsent(callee, k -> new ArrayList<>()).add(caller);
+                            return super.visit(methodReferenceNode);
+                        }
+
+                        @Override
+                        public boolean visit(SuperMethodReference methodReferenceNode) {
+                            String caller = method.getName().toString();
+                            String callee = methodReferenceNode.getName().toString();
+                            callGraph.computeIfAbsent(callee, k -> new ArrayList<>()).add(caller);
+                            return super.visit(methodReferenceNode);
+                        }
+
+                        @Override
+                        public boolean visit(TypeMethodReference methodReferenceNode) {
+                            String caller = method.getName().toString();
+                            String callee = methodReferenceNode.getName().toString();
+                            callGraph.computeIfAbsent(callee, k -> new ArrayList<>()).add(caller);
+                            return super.visit(methodReferenceNode);
+                        }
+
+                    });
+                    return super.visit(node);
+                }
+
+                @Override
+                public boolean visit(ExpressionMethodReference node) {
+                    String caller = method.getName().toString();
+                    String callee = node.getName().toString();
+                    callGraph.computeIfAbsent(callee, k -> new ArrayList<>()).add(caller);
+                    return super.visit(node);
+                }
+
+                @Override
+                public boolean visit(SuperMethodReference node) {
+                    String caller = method.getName().toString();
+                    String callee = node.getName().toString();
+                    callGraph.computeIfAbsent(callee, k -> new ArrayList<>()).add(caller);
+                    return super.visit(node);
+                }
+
+                @Override
+                public boolean visit(TypeMethodReference node) {
+                    String caller = method.getName().toString();
+                    String callee = node.getName().toString();
+                    callGraph.computeIfAbsent(callee, k -> new ArrayList<>()).add(caller);
                     return super.visit(node);
                 }
             });
