@@ -29,27 +29,31 @@ public class Runner
         launcher.buildModel();
         CtModel model = launcher.getModel();
 
+        //All Java Classes in the project
         List<CtClass<?>> allClasses = model.getElements(new TypeFilter<>(CtClass.class));
+
+        //All Methods in the project
         List<CtMethod<?>> allMethods = model.getElements(new TypeFilter<>(CtMethod.class));
-        // Step 1: Identify Database Methods
 
+        // Database methods in project
         Set<CtMethod<?>> databaseMethods = DatabaseMethodFinder.findDatabaseMethods(model, allClasses);
-
-        // Step 2: Trace Method Calls
-        Set<CtMethod<?>> callingMethods = MethodCallTracer.findMethodsCallingDatabaseMethods(model,allMethods, databaseMethods);
-
-        // Print results
-        for (CtMethod<?> method : callingMethods) {
-            System.out.println("Method calling database: " + method.getSignature());
+        for (CtMethod<?> method : databaseMethods) {
+            System.out.println("DATABASE Method is: " + method.getSignature() + "#" + method.getDeclaringType().getQualifiedName());
         }
+//        Set<CtMethod<?>> callingMethods = MethodCallTracer.findMethodsCallingDatabaseMethods(model,allMethods, databaseMethods);
+//        for (CtMethod<?> method : callingMethods) {
+//            System.out.println("Method calling database: " + method.getSignature());
+//        }
 
+
+        //Method Call Tracer File
         Set<String> callChains = MethodCallTracer.traceMethodCalls(databaseMethods, allMethods);
         // Print results
         for (String callChain : callChains) {
             System.out.println("Call chain: " + callChain);
         }
-//
-////        /*First Degree Caller*/
+
+      /*First Degree Caller*/
 //        CallHierarchyProcessor processor = new CallHierarchyProcessor();
 //        for (CtType<?> type : launcher.getFactory().Class().getAll()) {
 //            if (type instanceof CtClass) {
