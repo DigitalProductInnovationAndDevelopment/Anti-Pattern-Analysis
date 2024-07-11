@@ -156,6 +156,7 @@ public class CallChainAnalyzer {
                     String caller = method.getName().toString();
                     String callee = node.getName().toString();
                     callGraph.computeIfAbsent(callee, k -> new ArrayList<>()).add(caller);
+
                     return super.visit(node);
                 }
 
@@ -167,6 +168,7 @@ public class CallChainAnalyzer {
                             String caller = method.getName().toString();
                             String callee = lambdaNode.getName().toString();
                             callGraph.computeIfAbsent(callee, k -> new ArrayList<>()).add(caller);
+
                             return super.visit(lambdaNode);
                         }
 
