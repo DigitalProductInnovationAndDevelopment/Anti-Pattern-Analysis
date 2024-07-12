@@ -1,22 +1,18 @@
-package tum.dpid.processor;
+package tum.dpid.services.v1;
 
-import spoon.reflect.CtModel;
 import spoon.reflect.code.CtInvocation;
-import spoon.reflect.declaration.CtExecutable;
 import spoon.reflect.declaration.CtMethod;
 import spoon.reflect.reference.CtExecutableReference;
 import spoon.reflect.visitor.CtAbstractVisitor;
-import spoon.reflect.visitor.filter.TypeFilter;
 
 import java.util.*;
-import java.util.stream.Collectors;
-import spoon.reflect.visitor.PrinterHelper;
 
-
+/*
+    Previous version of method call chain processor but it lacks of all. It only prints first degree of method call chain
+ */
 public class CallHierarchyProcessor extends CtAbstractVisitor {
     private Map<String, Set<String>> callHierarchy = new HashMap<>();
 
-    //ToDo add recursion
     /*This prints one degree of children*/
     @Override
     public <T> void visitCtMethod(CtMethod<T> method) {

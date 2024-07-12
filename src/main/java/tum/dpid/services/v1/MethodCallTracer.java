@@ -1,9 +1,7 @@
-package tum.dpid.processor;
+package tum.dpid.services.v1;
 
-import spoon.Launcher;
 import spoon.reflect.CtModel;
 import spoon.reflect.code.CtInvocation;
-import spoon.reflect.declaration.CtClass;
 import spoon.reflect.declaration.CtMethod;
 import spoon.reflect.reference.CtExecutableReference;
 import spoon.reflect.visitor.filter.TypeFilter;
@@ -12,6 +10,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+/*
+    Previous version of method call chain processor.
+ */
 public class MethodCallTracer {
 
     public static Set<CtMethod<?>> findMethodsCallingDatabaseMethods(CtModel model, List<CtMethod<?>> allMethods, Set<CtMethod<?>> databaseMethods) {
@@ -75,3 +76,17 @@ public class MethodCallTracer {
     }
 
 }
+
+//Runner Code Snippet
+//        Set<CtMethod<?>> callingMethods = MethodCallTracer.findMethodsCallingDatabaseMethods(model,allMethods, databaseMethods);
+//        for (CtMethod<?> method : callingMethods) {
+//            System.out.println("Method calling database: " + method.getSignature());
+//        }
+
+//
+//        //Method Call Tracer File
+//        Set<String> callChains = MethodCallTracer.traceMethodCalls(databaseMethods, allMethods);
+//        // Print results
+//        for (String callChain : callChains) {
+//            System.out.println("Call chain: " + callChain);
+//        }
