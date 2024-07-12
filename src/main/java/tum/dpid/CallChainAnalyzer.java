@@ -194,6 +194,7 @@ public class CallChainAnalyzer {
 
                 @Override
                 public boolean visit(LambdaExpression node) {
+
                     checkMethodInvocationsInLoop(node.getBody(), methodMap, callGraph);
                     return super.visit(node);
                 }
@@ -262,6 +263,7 @@ public class CallChainAnalyzer {
         System.err.println("[ANTI-PATTERN] Detected: " + methodInvocation.getName().getIdentifier() +
                 " call inside a loop at line " +
                 ((CompilationUnit) methodInvocation.getRoot()).getLineNumber(methodInvocation.getStartPosition()));
+
     }
 
     static class MethodCollector extends ASTVisitor {
@@ -275,6 +277,7 @@ public class CallChainAnalyzer {
 
         @Override
         public boolean visit(MethodDeclaration node) {
+
             if (!excludedMethods.contains(node.getName().toString())) {
                 methodMap.put(node.getName().toString(), node);
             }
@@ -302,4 +305,5 @@ public class CallChainAnalyzer {
             return methodNames;
         }
     }
+
 }
