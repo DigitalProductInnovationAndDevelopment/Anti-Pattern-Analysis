@@ -1,23 +1,23 @@
 package tum.dpid;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.eclipse.jdt.core.dom.AST;
-import org.eclipse.jdt.core.dom.ASTParser;
-import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import tum.dpid.config.AnalyzerConfig;
 import tum.dpid.file.FileUtils;
-import tum.dpid.parser.MethodCollector;
-import tum.dpid.parser.MethodExtractor;
 import tum.dpid.graph.CallGraph;
 import tum.dpid.graph.CallGraphVisualizer;
+import tum.dpid.parser.MethodExtractor;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+
+import static tum.dpid.parser.MethodCollector.collectMethods;
 
 public class CallChainAnalyzer {
 
@@ -73,27 +73,5 @@ public class CallChainAnalyzer {
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
-
-    private static Map<String, MethodDeclaration> collectMethods(File projectDirectory, List<String> excludedMethods) throws IOException {
-        Map<String, MethodDeclaration> methodMap = new HashMap<>();
-        List<File> javaFiles = FileUtils.getJavaFilesRecursively(projectDirectory);
-
-        for (File javaFile : javaFiles) {
-            try {
-                String source = new String(Files.readAllBytes(javaFile.toPath()));
-                ASTParser parser = ASTParser.newParser(AST.JLS_Latest);
-                parser.setSource(source.toCharArray());
-                parser.setKind(ASTParser.K_COMPILATION_UNIT);
-
-                CompilationUnit cu = (CompilationUnit) parser.createAST(null);
-                cu.accept(new MethodCollector(methodMap, excludedMethods));
-            } catch (IOException e) {
-                System.err.println("Error reading file: " + javaFile.getName());
-                e.printStackTrace();
-            }
-        }
-
-        return methodMap;
     }
 }
