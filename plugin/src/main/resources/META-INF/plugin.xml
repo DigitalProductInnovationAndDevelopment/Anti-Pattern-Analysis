@@ -1,0 +1,27 @@
+<idea-plugin>
+<id>com.github.melisunsal.detectionplugin</id>
+<name>Anti Pattern Analysis</name>
+<version>1.0</version>
+<vendor>melisunsal</vendor>
+
+<description>
+    Anti Pattern Analysis plugin for detecting various anti-patterns in Java code.
+</description>
+
+<depends>com.intellij.modules.platform</depends>
+
+<actions>
+    <action id="AntiPatternAnalysis.ToolWindow" class="com.github.melisunsal.detectionplugin.AntiPatternToolWindowAction" text="Anti Pattern Analysis" description="Run anti pattern analysis">
+        <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
+    </action>
+</actions>
+
+<extensions defaultExtensionNs="com.intellij">
+    <toolWindow id="Anti Pattern Analysis" anchor="right" factoryClass="com.github.melisunsal.detectionplugin.AntiPatternToolWindowFactory"/>
+</extensions>
+
+<applicationListeners>
+    <listener class="com.github.melisunsal.detectionplugin.listeners.MyApplicationActivationListener" topic="com.intellij.openapi.application.ApplicationActivationListener"/>
+</applicationListeners>
+</idea-plugin>
+
