@@ -3,6 +3,7 @@ package tum.dpid;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eclipse.jdt.core.dom.*;
 import tum.dpid.config.AnalyzerConfig;
+import tum.dpid.services.DynamicAnalyzer;
 
 import java.io.File;
 import java.io.IOException;
@@ -68,6 +69,11 @@ public class CallChainAnalyzer {
             drawCallGraph(targetMethod, callGraph, 0, new HashSet<>());
             System.out.println();
 
+        }
+        DynamicAnalyzer dynamicAnalyzer = new DynamicAnalyzer(config.getSnapshotCsvFilePath());
+        boolean result = dynamicAnalyzer.checkAntiPattern("com.example.LoopAntiPattern.api.ProductController.findByArticleNumbers ()");
+        if (result) {
+            System.out.println("The pre-identified method's execution time exceeds 2 seconds, indicating an anti-pattern.");
         }
     }
 
