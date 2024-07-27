@@ -12,13 +12,15 @@ public class AnalyzerConfig {
     private List<String> excludedClasses;
     private List<String> excludedMethods;
 
+    private String snapshotCsvFilePath;
     public AnalyzerConfig() {}
 
-    public AnalyzerConfig(String projectDirectory, String repositoryDirectory, List<String> excludedClasses, List<String> excludedMethods) {
+    public AnalyzerConfig(String projectDirectory, String repositoryDirectory, List<String> excludedClasses, List<String> excludedMethods, String snapshotCsvFilePath) {
         this.projectDirectory = projectDirectory;
         this.repositoryDirectory = repositoryDirectory;
         this.excludedClasses = excludedClasses;
         this.excludedMethods = excludedMethods;
+        this.snapshotCsvFilePath = snapshotCsvFilePath;
     }
 
     public String getProjectDirectory() {
@@ -51,5 +53,13 @@ public class AnalyzerConfig {
 
     public void setExcludedMethods(List<String> excludedMethods) {
         this.excludedMethods = excludedMethods;
+    }
+
+    public String getSnapshotCsvFilePath() {
+        return snapshotCsvFilePath;
+    }
+
+    public void setSnapshotCsvFilePath(String snapshotCsvFilePath) {
+        this.snapshotCsvFilePath = snapshotCsvFilePath;
     }
 }
