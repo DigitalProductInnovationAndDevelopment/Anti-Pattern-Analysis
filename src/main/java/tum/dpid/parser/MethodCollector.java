@@ -1,5 +1,6 @@
 package tum.dpid.parser;
 
+import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.dom.*;
 import tum.dpid.file.FileUtils;
 
@@ -35,8 +36,17 @@ public class MethodCollector extends ASTVisitor {
             try {
                 String source = new String(Files.readAllBytes(javaFile.toPath()));
                 ASTParser parser = ASTParser.newParser(AST.JLS_Latest);
+
                 parser.setSource(source.toCharArray());
                 parser.setKind(ASTParser.K_COMPILATION_UNIT);
+
+                String[] classPathEntries = { projectDirectory.getAbsolutePath() + "/build/classes"};// not necessary to crete bindings but might be helpful later
+                String[] sourcePathEntries = { projectDirectory.getAbsolutePath() };
+                parser.setEnvironment(classPathEntries, sourcePathEntries, new String[] { "UTF-8" }, true);
+                parser.setResolveBindings(true);
+                parser.setBindingsRecovery(true);
+                parser.setCompilerOptions(JavaCore.getOptions());
+                parser.setUnitName("com.example.LoopAntiPattern");//could be random unit name
 
                 CompilationUnit cu = (CompilationUnit) parser.createAST(null);
                 cu.accept(new MethodCollector(methodMap, excludedMethods));
@@ -44,8 +54,12 @@ public class MethodCollector extends ASTVisitor {
                 System.err.println("Error reading file: " + javaFile.getName());
                 e.printStackTrace();
             }
+            catch (Exception e){
+                System.err.println("Error creating AST " + e);
+            }
         }
 
         return methodMap;
     }
+
 }
