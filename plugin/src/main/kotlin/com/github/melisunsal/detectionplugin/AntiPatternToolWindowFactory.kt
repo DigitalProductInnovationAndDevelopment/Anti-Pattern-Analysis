@@ -4,13 +4,12 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
+import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.content.ContentFactory
+import com.intellij.util.ui.JBUI
 import java.awt.*
-import java.awt.image.BufferedImage
 import java.io.BufferedReader
-import java.io.File
 import java.io.InputStreamReader
-import javax.imageio.ImageIO
 import javax.swing.*
 
 
@@ -36,12 +35,25 @@ class AntiPatternToolWindowFactory : ToolWindowFactory, DumbAware {
                 "<ul><li>For Loop Database Anti-Performance</li></ul></html>")
         panel.add(infoLabel)
 
-        val runButton = JButton("Run Analysis")
+        val iconUrl = this::class.java.getResource("/icons/play-button-green-icon.png")
+        val icon = ImageIcon(ImageIcon(iconUrl).image.getScaledInstance(20,20, Image.SCALE_DEFAULT))
+        val runButton = JButton("Run Analysis", icon)
+        runButton.preferredSize = Dimension(250, 50) // Set the width to 200 and the height to 50
+        runButton.setFont(Font("Arial", Font.BOLD, 14))
         panel.add(runButton)
+
+        val emptyLabel = JLabel(" ")
+        emptyLabel.setFont(Font("Arial", Font.PLAIN, 20)) // Change the number to adjust the size
+        panel.add(emptyLabel)
 
         val outputArea = JTextArea(10, 50)
         outputArea.isEditable = false
-        panel.add(JScrollPane(outputArea))
+        outputArea.lineWrap = true
+        outputArea.wrapStyleWord = true
+        outputArea.border = JBUI.Borders.empty(10)
+        val scrollPane = JBScrollPane(outputArea)
+        scrollPane.border = JBUI.Borders.empty(10)
+        panel.add(scrollPane)
 
         runButton.addActionListener {
             try {
