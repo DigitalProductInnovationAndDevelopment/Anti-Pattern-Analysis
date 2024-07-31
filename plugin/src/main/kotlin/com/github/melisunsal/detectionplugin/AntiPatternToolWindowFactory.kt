@@ -8,44 +8,74 @@ import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.content.ContentFactory
 import com.intellij.util.ui.JBUI
 import java.awt.*
-import java.io.BufferedReader
-import java.io.InputStreamReader
 import javax.swing.*
-
 
 class AntiPatternToolWindowFactory : ToolWindowFactory, DumbAware {
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
         val panel = JPanel()
-        panel.layout = BoxLayout(panel, BoxLayout.Y_AXIS)
+        panel.layout = GridBagLayout()
+        val gbc = GridBagConstraints()
+        gbc.insets = JBUI.insets(10)
+        gbc.fill = GridBagConstraints.HORIZONTAL
 
-        val titleLabel = JLabel("<html><h2>Anti Pattern Analysis</h2></html>")
-        panel.add(titleLabel)
-
+        // Image first
+        gbc.gridx = 0
+        gbc.gridy = 0
+        gbc.weightx = 0.0
         val imageUrl = this::class.java.getResource("/icons/logo.png")
         val imageIcon = ImageIcon(imageUrl).image
-        val resizedImage = imageIcon.getScaledInstance(100, 100, Image.SCALE_DEFAULT)
+        val resizedImage = imageIcon.getScaledInstance(100, 100, Image.SCALE_SMOOTH)
         val resizedIcon = ImageIcon(resizedImage)
         val imageLabel = JLabel(resizedIcon)
-        panel.add(imageLabel)
+        panel.add(imageLabel, gbc)
 
-        // Add information label
+        // Title next to image
+        gbc.gridx = 1
+        gbc.weightx = 1.0
+        val titleLabel = JLabel("<html><h2>Anti Pattern Analysis</h2></html>")
+        titleLabel.font = Font("Arial", Font.BOLD, 18)
+        panel.add(titleLabel, gbc)
+
+        // Next row for information label
+        gbc.gridx = 0
+        gbc.gridy = 1
+        gbc.gridwidth = 2
+        gbc.weightx = 1.0
         val infoLabel = JLabel(
-                "<html><p>This plugin detects various anti-patterns in your Java code.</p>" +
-                "<p><strong>Detectable Anti-patterns:</strong></p>" +
-                "<ul><li>For Loop Database Anti-Performance</li></ul></html>")
-        panel.add(infoLabel)
+            "<html><p>This plugin detects various anti-patterns in your Java code.</p>" +
+                    "<p><strong>Detectable Anti-patterns:</strong></p>" +
+                    "<ul><li>For Loop Database Anti-Performance</li></ul></html>"
+        )
+        panel.add(infoLabel, gbc)
 
+        // Run button row
+        gbc.gridy++
+        gbc.gridwidth = 2
+        gbc.weightx = 0.0
         val iconUrl = this::class.java.getResource("/icons/play-button-green-icon.png")
-        val icon = ImageIcon(ImageIcon(iconUrl).image.getScaledInstance(20,20, Image.SCALE_DEFAULT))
+        val icon = ImageIcon(ImageIcon(iconUrl).image.getScaledInstance(20, 20, Image.SCALE_SMOOTH))
         val runButton = JButton("Run Analysis", icon)
-        runButton.preferredSize = Dimension(250, 50) // Set the width to 200 and the height to 50
-        runButton.setFont(Font("Arial", Font.BOLD, 14))
-        panel.add(runButton)
+        runButton.preferredSize = Dimension(300, 60)  // Increased button size
+        runButton.minimumSize = Dimension(300, 60)    // Minimum size to ensure it doesn't shrink
+        runButton.maximumSize = Dimension(300, 60)
+        runButton.font = Font("Arial", Font.BOLD, 14)
+        runButton.toolTipText = "Click to start anti-pattern analysis"
+        panel.add(runButton, gbc)
 
-        val emptyLabel = JLabel(" ")
-        emptyLabel.setFont(Font("Arial", Font.PLAIN, 20)) // Change the number to adjust the size
-        panel.add(emptyLabel)
+        // Progress bar
+        gbc.gridx = 1
+        gbc.weightx = 1.0
+        val progressBar = JProgressBar()
+        progressBar.isVisible = false
+        panel.add(progressBar, gbc)
 
+        // Output area
+        gbc.gridx = 0
+        gbc.gridy++
+        gbc.gridwidth = 2
+        gbc.fill = GridBagConstraints.BOTH
+        gbc.weightx = 1.0
+        gbc.weighty = 1.0
         val outputArea = JTextArea(10, 50)
         outputArea.isEditable = false
         outputArea.lineWrap = true
@@ -53,7 +83,7 @@ class AntiPatternToolWindowFactory : ToolWindowFactory, DumbAware {
         outputArea.border = JBUI.Borders.empty(10)
         val scrollPane = JBScrollPane(outputArea)
         scrollPane.border = JBUI.Borders.empty(10)
-        panel.add(scrollPane)
+        panel.add(scrollPane, gbc)
 
         runButton.addActionListener {
             try {
