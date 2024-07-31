@@ -4,6 +4,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
+import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.content.ContentFactory
 import com.intellij.util.ui.JBUI
@@ -79,6 +80,7 @@ class AntiPatternToolWindowFactory : ToolWindowFactory, DumbAware {
         val outputArea = JTextArea(10, 50)
         outputArea.isEditable = false
         outputArea.lineWrap = true
+        outputArea.selectionColor = JBColor.YELLOW
         outputArea.wrapStyleWord = true
         outputArea.border = JBUI.Borders.empty(10)
         val scrollPane = JBScrollPane(outputArea)
@@ -86,15 +88,42 @@ class AntiPatternToolWindowFactory : ToolWindowFactory, DumbAware {
         panel.add(scrollPane, gbc)
 
         runButton.addActionListener {
+            runButton.isEnabled = false
+            progressBar.isVisible = true
+            progressBar.isIndeterminate = true
+            // ------------ TEST CODE ------------
             try {
-                val process = Runtime.getRuntime().exec("java -jar /path/to/your/anti-pattern-detector.jar")
-                val reader = process.inputStream.bufferedReader()
-                val output = StringBuilder()
-                reader.forEachLine { line -> output.append(line).append("\n") }
-                outputArea.text = output.toString()
-            } catch (ex: Exception) {
-                outputArea.text = "An error occurred: ${ex.message}"
+                outputArea.text =
+                    "for (final var articleNumber : articleNumbers) {\n" +
+                        "  getProductsByArticleNumber(articleNumber).forEach(dto -> productsById.put(dto.getId(), dto));\n" +
+                    "  }"
             }
+            catch (ex: Exception) {
+                outputArea.text = "An error occurred: ${ex.message}"
+                ex.printStackTrace()
+            } finally {
+                runButton.isEnabled = true
+                progressBar.isVisible = false
+                progressBar.isIndeterminate = false
+            }
+            // ------------ TEST CODE ------------
+
+            /*SwingUtilities.invokeLater {
+                try {
+                    val process = Runtime.getRuntime().exec("java -jar /path/to/your/anti-pattern-detector.jar")
+                    val reader = process.inputStream.bufferedReader()
+                    val output = StringBuilder()
+                    reader.forEachLine { line -> output.append(line).append("\n") }
+                    outputArea.text = output.toString()
+                } catch (ex: Exception) {
+                    outputArea.text = "An error occurred: ${ex.message}"
+                    ex.printStackTrace()
+                } finally {
+                    runButton.isEnabled = true
+                    progressBar.isVisible = false
+                    progressBar.isIndeterminate = false
+                }
+            }*/
         }
 
         val contentFactory = ContentFactory.getInstance()
