@@ -9,9 +9,15 @@ import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.content.ContentFactory
 import com.intellij.util.ui.JBUI
 import java.awt.*
+import java.io.BufferedReader
+import java.io.IOException
+import java.io.InputStreamReader
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
 import javax.swing.*
 
 class AntiPatternToolWindowFactory : ToolWindowFactory, DumbAware {
+    private val outputArea = JTextArea(10, 50)
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
         val panel = JPanel()
         panel.layout = GridBagLayout()
@@ -77,7 +83,6 @@ class AntiPatternToolWindowFactory : ToolWindowFactory, DumbAware {
         gbc.fill = GridBagConstraints.BOTH
         gbc.weightx = 1.0
         gbc.weighty = 1.0
-        val outputArea = JTextArea(10, 50)
         outputArea.isEditable = false
         outputArea.lineWrap = true
         outputArea.selectionColor = JBColor.YELLOW
@@ -88,46 +93,46 @@ class AntiPatternToolWindowFactory : ToolWindowFactory, DumbAware {
         panel.add(scrollPane, gbc)
 
         runButton.addActionListener {
-            runButton.isEnabled = false
-            progressBar.isVisible = true
-            progressBar.isIndeterminate = true
-            // ------------ TEST CODE ------------
-            try {
-                outputArea.text =
-                    "for (final var articleNumber : articleNumbers) {\n" +
-                        "  getProductsByArticleNumber(articleNumber).forEach(dto -> productsById.put(dto.getId(), dto));\n" +
-                    "  }"
-            }
-            catch (ex: Exception) {
-                outputArea.text = "An error occurred: ${ex.message}"
-                ex.printStackTrace()
-            } finally {
-                runButton.isEnabled = true
-                progressBar.isVisible = false
-                progressBar.isIndeterminate = false
-            }
-            // ------------ TEST CODE ------------
-
-            /*SwingUtilities.invokeLater {
-                try {
-                    val process = Runtime.getRuntime().exec("java -jar /path/to/your/anti-pattern-detector.jar")
-                    val reader = process.inputStream.bufferedReader()
-                    val output = StringBuilder()
-                    reader.forEachLine { line -> output.append(line).append("\n") }
-                    outputArea.text = output.toString()
-                } catch (ex: Exception) {
-                    outputArea.text = "An error occurred: ${ex.message}"
-                    ex.printStackTrace()
-                } finally {
-                    runButton.isEnabled = true
-                    progressBar.isVisible = false
-                    progressBar.isIndeterminate = false
-                }
-            }*/
+            runAnalysis()
         }
 
         val contentFactory = ContentFactory.getInstance()
         val content = contentFactory.createContent(panel, "", false)
         toolWindow.contentManager.addContent(content)
     }
+
+    private fun runAnalysis() {
+        val jarResourcePath = "/jar/CodeOutput.jar"
+        val tempDir = Files.createTempDirectory("antipattern-analysis")
+        val tempJarPath = tempDir.resolve("CodeOutput.jar")
+
+        try {
+            // Copy the JAR from resources to a temporary file
+            javaClass.getResourceAsStream(jarResourcePath).use { inputStream ->
+                if (inputStream == null) {
+                    outputArea.text = "Error: Could not find CodeOutput.jar in resources."
+                    return
+                }
+                Files.copy(inputStream, tempJarPath, StandardCopyOption.REPLACE_EXISTING)
+            }
+
+            // Run the JAR
+            val process = Runtime.getRuntime().exec("java -jar ${tempJarPath}")
+            val reader = BufferedReader(InputStreamReader(process.inputStream))
+            val output = StringBuilder()
+
+            reader.forEachLine { line ->
+                output.append(line).append("\n")
+            }
+
+            outputArea.text = "⁠  \n${output.toString()}\n  ⁠"
+        } catch (e: Exception) {
+            outputArea.text = "Error: ${e.message}"
+        } finally {
+            // Clean up: delete the temporary JAR file
+            Files.deleteIfExists(tempJarPath)
+            Files.deleteIfExists(tempDir)
+        }
+    }
 }
+
