@@ -1,4 +1,4 @@
-package com.github.melisunsal.detectionplugin
+package tum.dpid
 
 import com.intellij.DynamicBundle
 import org.jetbrains.annotations.NonNls

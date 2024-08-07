@@ -1,9 +1,9 @@
-package com.github.melisunsal.detectionplugin.services
+package tum.dpid.services
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
-import com.github.melisunsal.detectionplugin.MyBundle
+import tum.dpid.MyBundle
 
 @Service(Service.Level.PROJECT)
 class MyProjectService(project: Project) {

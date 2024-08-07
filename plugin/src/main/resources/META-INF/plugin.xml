@@ -1,27 +1,33 @@
 <idea-plugin>
-<id>com.github.melisunsal.detectionplugin</id>
-<name>Anti Pattern Analysis</name>
-<version>1.0</version>
-<vendor>melisunsal</vendor>
 
-<description>
-    Anti Pattern Analysis plugin for detecting various anti-patterns in Java code.
-</description>
+    <id>tum.dpid.antipatternanalysis.plugin</id>
+    <name>Anti-Pattern Analysis</name>
+    <version>0.0.1</version>
+    <vendor>Digital Product Innovation and Development, TUM</vendor>
 
-<depends>com.intellij.modules.platform</depends>
+    <description>
+        Anti Pattern Analysis plugin for detecting various anti-patterns in Java code.
+    </description>
 
-<actions>
-    <action id="AntiPatternAnalysis.ToolWindow" class="com.github.melisunsal.detectionplugin.AntiPatternToolWindowAction" text="Anti Pattern Analysis" description="Run anti pattern analysis">
-        <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
-    </action>
-</actions>
+    <depends>com.intellij.modules.platform</depends>
 
-<extensions defaultExtensionNs="com.intellij">
-    <toolWindow id="Anti Pattern Analysis" anchor="right" factoryClass="com.github.melisunsal.detectionplugin.AntiPatternToolWindowFactory"/>
-</extensions>
+    <actions>
+        <action id="AntiPatternAnalysis.ToolWindow"
+                class="tum.dpid.toolWindow.AntiPatternToolWindowAction"
+                text="Anti Pattern Analysis"
+                description="Run anti pattern analysis">
+            <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
+        </action>
+    </actions>
 
-<applicationListeners>
-    <listener class="com.github.melisunsal.detectionplugin.listeners.MyApplicationActivationListener" topic="com.intellij.openapi.application.ApplicationActivationListener"/>
-</applicationListeners>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <toolWindow id="Anti Pattern Analysis"
+                    secondary="true"
+                    icon="/icons/logo.svg"
+                    anchor="right"
+                    factoryClass="tum.dpid.toolWindow.AntiPatternToolWindowFactory"/>
+    </extensions>
+
 </idea-plugin>
 
