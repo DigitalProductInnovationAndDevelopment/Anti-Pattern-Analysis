@@ -1,4 +1,5 @@
-package com.github.melisunsal.detectionplugin
+package tum.dpid.toolWindow
+
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.wm.ToolWindowManager
