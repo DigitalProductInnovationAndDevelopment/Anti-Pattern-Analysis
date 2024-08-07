@@ -1,7 +1,28 @@
 <!-- Plugin description -->
-This Fancy IntelliJ Platform Plugin is going to be your implementation of the brilliant ideas that you have.
-
-This specific section is a source for the [plugin.xml](/src/main/resources/META-INF/plugin.xml) file which will be extracted by the [Gradle](/build.gradle.kts) during the build process.
-
-To keep everything working, do not remove `<!-- ... -->` sections.
+This plugin aims to provide tools and methodologies for identifying and addressing common anti-patterns in software
+development. By analyzing code bases, we aim to catch potential deadlocks, performance issues, and unnecessary code
+snippets that can impede maintainability, scalability, and overall software quality.
 <!-- Plugin description end -->
+
+## Installation
+
+To build the plugin, run the following command:
+
+```shell
+./gradlew buildPlugin
+```
+
+The plugin will be built to the `build/distributions` directory. You can install it in your IDE by going
+to `Settings -> Plugins -> Install Plugin from Disk...`.
+
+To run the plugin in the IDE, use the following command:
+
+```shell
+./gradlew runIde
+```
+
+To debug the plugin, run the following command (Can be used in IntelliJ IDEA):
+
+```shell
+./gradlew runIde --debug-jvm
+```
