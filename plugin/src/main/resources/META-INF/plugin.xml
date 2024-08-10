@@ -1,0 +1,33 @@
+<idea-plugin>
+
+    <id>tum.dpid.antipatternanalysis.plugin</id>
+    <name>Anti-Pattern Analysis</name>
+    <version>0.0.1</version>
+    <vendor>Digital Product Innovation and Development, TUM</vendor>
+
+    <description>
+        Anti Pattern Analysis plugin for detecting various anti-patterns in Java code.
+    </description>
+
+    <depends>com.intellij.modules.platform</depends>
+
+    <actions>
+        <action id="AntiPatternAnalysis.ToolWindow"
+                class="tum.dpid.toolWindow.AntiPatternToolWindowAction"
+                text="Anti Pattern Analysis"
+                description="Run anti pattern analysis">
+            <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
+        </action>
+    </actions>
+
+
+    <extensions defaultExtensionNs="com.intellij">
+        <toolWindow id="Anti Pattern Analysis"
+                    secondary="true"
+                    icon="/icons/logo.svg"
+                    anchor="right"
+                    factoryClass="tum.dpid.toolWindow.AntiPatternToolWindowFactory"/>
+    </extensions>
+
+</idea-plugin>
+

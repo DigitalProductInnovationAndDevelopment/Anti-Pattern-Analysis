@@ -1,7 +1,6 @@
 {
-  "projectDirectory": "../LoopAntiPattern/src",
-  "repositoryDirectory": "../LoopAntiPattern/src/main/java/com/example/LoopAntiPattern/data/repository",
-  "excludedClasses": ["ProductRepository.java", "ExcludeThat.java"],
-  "excludedMethods": ["someMethod"],
+  "projectDirectory": "../LoopAntiPattern",
+  "thirdPartyMethodPaths": ["../LoopAntiPattern/src/main/java/com/example/LoopAntiPattern/data/repository"],
+  "exclusions": [],
   "snapshotCsvFilePath": "../LoopAntiPattern/src/main/resources/snapshot.csv"
 }

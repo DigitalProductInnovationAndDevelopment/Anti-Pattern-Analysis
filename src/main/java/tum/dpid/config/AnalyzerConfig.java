@@ -8,18 +8,16 @@ import java.util.List;
 public class AnalyzerConfig {
 
     private String projectDirectory;
-    private String repositoryDirectory;
-    private List<String> excludedClasses;
-    private List<String> excludedMethods;
+    private List<String> thirdPartyMethodPaths;
+    private List<String> exclusions;
 
     private String snapshotCsvFilePath;
     public AnalyzerConfig() {}
 
-    public AnalyzerConfig(String projectDirectory, String repositoryDirectory, List<String> excludedClasses, List<String> excludedMethods, String snapshotCsvFilePath) {
+    public AnalyzerConfig(String projectDirectory, List<String> thirdPartyMethodPaths, List<String> exclusions, String snapshotCsvFilePath) {
         this.projectDirectory = projectDirectory;
-        this.repositoryDirectory = repositoryDirectory;
-        this.excludedClasses = excludedClasses;
-        this.excludedMethods = excludedMethods;
+        this.thirdPartyMethodPaths = thirdPartyMethodPaths;
+        this.exclusions = exclusions;
         this.snapshotCsvFilePath = snapshotCsvFilePath;
     }
 
@@ -31,28 +29,20 @@ public class AnalyzerConfig {
         this.projectDirectory = projectDirectory;
     }
 
-    public String getRepositoryDirectory() {
-        return repositoryDirectory;
+    public List<String> getThirdPartyMethodPaths() {
+        return thirdPartyMethodPaths;
     }
 
-    public void setRepositoryDirectory(String repositoryDirectory) {
-        this.repositoryDirectory = repositoryDirectory;
+    public void setThirdPartyMethodPaths(List<String> thirdPartyMethodPaths) {
+        this.thirdPartyMethodPaths = thirdPartyMethodPaths;
     }
 
-    public List<String> getExcludedClasses() {
-        return excludedClasses;
+    public List<String> getExclusions() {
+        return exclusions;
     }
 
-    public void setExcludedClasses(List<String> excludedClasses) {
-        this.excludedClasses = excludedClasses;
-    }
-
-    public List<String> getExcludedMethods() {
-        return excludedMethods;
-    }
-
-    public void setExcludedMethods(List<String> excludedMethods) {
-        this.excludedMethods = excludedMethods;
+    public void setExclusions(List<String> exclusions) {
+        this.exclusions = exclusions;
     }
 
     public String getSnapshotCsvFilePath() {
