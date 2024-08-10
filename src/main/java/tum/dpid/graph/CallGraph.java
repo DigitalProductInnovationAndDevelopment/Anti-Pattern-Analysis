@@ -60,8 +60,8 @@ public class CallGraph {
                     String caller = method.getName().toString();
                     String callee = node.getName().toString();
 
-                    System.out.println("Caller " + caller + " callee " + callee +"  resolveMethodBinding: " +node.resolveMethodBinding() + " declaration is " + node.resolveMethodBinding().getMethodDeclaration()
-                            + " key: " +  node.resolveMethodBinding().getKey() + " package name: " + node.resolveMethodBinding().getDeclaringClass().getPackage().getName());
+//                    System.out.println("Caller " + caller + " callee " + callee +"  resolveMethodBinding: " +node.resolveMethodBinding() + " declaration is " + node.resolveMethodBinding().getMethodDeclaration()
+//                            + " key: " +  node.resolveMethodBinding().getKey() + " package name: " + node.resolveMethodBinding().getDeclaringClass().getPackage().getName());
 
                     callGraph.computeIfAbsent(callee, k -> new ArrayList<>()).add(caller);
                     return super.visit(node);

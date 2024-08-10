@@ -1,6 +1,6 @@
 {
-  "projectDirectory": "../LoopAntiPattern",
-  "repositoryDirectory": "../LoopAntiPattern/src/main/java/com/example/LoopAntiPattern/data/repository",
+  "projectDirectory": "../../fromItestra/LoopAntiPattern",
+  "repositoryDirectory": "../../fromItestra/LoopAntiPattern/src/main/java/com/example/LoopAntiPattern/data/repository",
   "excludedClasses": ["ExcludeThis.java", "ExcludeThat.java"],
   "excludedMethods": ["randomMethod"]
 }

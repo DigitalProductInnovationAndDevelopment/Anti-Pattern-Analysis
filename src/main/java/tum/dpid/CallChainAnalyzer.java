@@ -6,6 +6,7 @@ import tum.dpid.config.AnalyzerConfig;
 import tum.dpid.file.FileUtils;
 import tum.dpid.graph.CallGraph;
 import tum.dpid.graph.CallGraphVisualizer;
+import tum.dpid.parser.LoopVisitor;
 import tum.dpid.parser.MethodExtractor;
 
 import java.io.File;
@@ -70,6 +71,8 @@ public class CallChainAnalyzer {
                 CallGraphVisualizer.drawCallGraph(targetMethod, callGraph, 0, new HashSet<>());
                 System.out.println();
             }
+            LoopVisitor.checkForDatabaseCallsInLoops(methodMap, callGraph, DB_METHODS);
+
         } catch (IOException e) {
             e.printStackTrace();
         }
