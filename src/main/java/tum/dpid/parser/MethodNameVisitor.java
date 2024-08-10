@@ -1,23 +1,20 @@
 package tum.dpid.parser;
 
 import org.eclipse.jdt.core.dom.*;
+import tum.dpid.util.MethodKeyGenerator;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class MethodNameVisitor extends ASTVisitor {
     private final List<String> methodNames = new ArrayList<>();
-    private final List<String> excludedMethods;
 
-    public MethodNameVisitor(List<String> excludedMethods) {
-        this.excludedMethods = excludedMethods;
+    public MethodNameVisitor() {
     }
 
     @Override
     public boolean visit(MethodDeclaration node) {
-        if (!excludedMethods.contains(node.getName().getIdentifier())) {
-            methodNames.add(node.getName().getIdentifier());
-        }
+        methodNames.add(node.getName().toString());
         return super.visit(node);
     }
 

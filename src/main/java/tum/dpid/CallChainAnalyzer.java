@@ -1,11 +1,14 @@
 package tum.dpid;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.eclipse.jdt.core.dom.MethodDeclaration;
+import org.eclipse.jdt.core.dom.ASTParser;
 import tum.dpid.config.AnalyzerConfig;
 import tum.dpid.file.FileUtils;
+import tum.dpid.graph.CallChainVisitor;
 import tum.dpid.graph.CallGraph;
-import tum.dpid.graph.CallGraphVisualizer;
+import tum.dpid.model.CallChainEntity;
+import tum.dpid.model.MethodDeclarationWrapper;
+import tum.dpid.parser.ASTGenerator;
 import tum.dpid.parser.MethodExtractor;
 
 import java.io.File;
@@ -13,9 +16,12 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static tum.dpid.parser.MethodCollector.collectMethods;
 
@@ -33,19 +39,6 @@ public class CallChainAnalyzer {
             return;
         }
 
-        String directoryPath = config.getRepositoryDirectory();
-        Path dirPath = Paths.get(directoryPath);
-        List<String> DB_METHODS = new ArrayList<>();
-
-        try {
-            List<Path> javaFiles = FileUtils.getJavaFiles(dirPath);
-            for (Path javaFile : javaFiles) {
-                DB_METHODS.addAll(MethodExtractor.extractMethodNames(javaFile, config.getExcludedClasses(), config.getExcludedMethods()));
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
         String projectDirectoryPath = config.getProjectDirectory();
         File projectDirectory = new File(projectDirectoryPath);
 
@@ -54,21 +47,54 @@ public class CallChainAnalyzer {
             return;
         }
 
+        ASTParser parser = ASTGenerator.createParser();
+
+        Set<String> DB_METHODS = new HashSet<>();
+        List<String> directoryPaths = config.getThirdPartyMethodPaths();
+        for (String directoryPath : directoryPaths) {
+            Path dirPath = Paths.get(directoryPath);
+            try {
+                List<Path> javaFiles = FileUtils.getJavaFiles(dirPath);
+                for (Path javaFile : javaFiles) {
+                    DB_METHODS.addAll(MethodExtractor.extractMethodNames(projectDirectory, parser, javaFile));
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
         try {
-            Map<String, MethodDeclaration> methodMap = collectMethods(projectDirectory, config.getExcludedMethods());
+            Map<String, MethodDeclarationWrapper> methodMap = collectMethods(projectDirectory, parser, config.getExclusions());
             Map<String, List<String>> callGraph = CallGraph.buildCallGraph(methodMap);
 
             for (String targetMethod : DB_METHODS) {
-                List<String> callChain = new ArrayList<>();
-                CallGraph.traceCallChainInOrder(targetMethod, callGraph, new HashSet<>(), callChain, methodMap);
+                List<CallChainEntity> callChain = new ArrayList<>();
+                CallChainVisitor.traceCallChainInOrder(targetMethod, null, callGraph, callChain, new HashSet<>(), methodMap);
 
                 if (callChain.isEmpty()) {
                     System.out.println("No calls found for method: " + targetMethod);
                 }
 
-                System.out.println("Call graph for method: " + targetMethod);
-                CallGraphVisualizer.drawCallGraph(targetMethod, callGraph, 0, new HashSet<>());
-                System.out.println();
+                Collections.reverse(callChain);
+                List<CallChainEntity> entitiesWithLoops = new ArrayList<>();
+                CallChainEntity entryMethod = callChain.get(0);
+                boolean hasAntiPattern = false;
+                for (CallChainEntity callChainEntity : callChain) {
+                    if (callChainEntity.isInvokesChildInLoop()) {
+                        hasAntiPattern = true;
+                        entitiesWithLoops.add(callChainEntity);
+                    }
+                }
+
+                if (hasAntiPattern) {
+                    MethodDeclarationWrapper method = methodMap.get(entryMethod.getName());
+                    System.out.println("Call chain starting with method " + entryMethod.getName() + " at position " + method.getLineNumber() + ":" + method.getColumnNumber() + " in file: " + method.getDeclaringClass() + " has a loop anti pattern!");
+                    entitiesWithLoops.forEach(entity -> {
+                        MethodDeclarationWrapper entityMethod = methodMap.get(entity.getName());
+                        System.out.println("\tMethod " + entity.getName() + " at position " + entityMethod.getLineNumber() + ":" + entityMethod.getColumnNumber() + " in file: " + entityMethod.getDeclaringClass() + " invokes method: " + entity.getInvokedMethod() + " in a LOOP!");
+                    });
+                    System.out.println();
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();

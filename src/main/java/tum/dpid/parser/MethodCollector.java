@@ -1,8 +1,12 @@
 package tum.dpid.parser;
 
-import org.eclipse.jdt.core.JavaCore;
-import org.eclipse.jdt.core.dom.*;
+import org.eclipse.jdt.core.dom.ASTParser;
+import org.eclipse.jdt.core.dom.ASTVisitor;
+import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.MethodDeclaration;
 import tum.dpid.file.FileUtils;
+import tum.dpid.model.MethodDeclarationWrapper;
+import tum.dpid.util.MethodKeyGenerator;
 
 import java.io.File;
 import java.io.IOException;
@@ -12,54 +16,60 @@ import java.util.List;
 import java.util.Map;
 
 public class MethodCollector extends ASTVisitor {
-    private final Map<String, MethodDeclaration> methodMap;
-    private final List<String> excludedMethods;
+    private final Map<String, MethodDeclarationWrapper> methodMap;
+    private final CompilationUnit compilationUnit;
+    private final List<String> exclusions;
 
-    public MethodCollector(Map<String, MethodDeclaration> methodMap, List<String> excludedMethods) {
+    public MethodCollector(Map<String, MethodDeclarationWrapper> methodMap, CompilationUnit cu, List<String> exclusions) {
         this.methodMap = methodMap;
-        this.excludedMethods = excludedMethods;
+        this.compilationUnit = cu;
+        this.exclusions = exclusions;
     }
 
     @Override
     public boolean visit(MethodDeclaration node) {
-        if (!excludedMethods.contains(node.getName().toString())) {
-            methodMap.put(node.getName().toString(), node);
+
+        String declaringClass = node.resolveBinding().getDeclaringClass().getBinaryName();
+        int lineNumber = compilationUnit.getLineNumber(node.getStartPosition());
+        int columnNumber = compilationUnit.getColumnNumber(node.getStartPosition());
+        if (shouldExcludeMethod(MethodKeyGenerator.generateKey(node))) {
+            methodMap.put(node.getName().toString(), new MethodDeclarationWrapper(true, declaringClass, lineNumber, columnNumber, node));
+        } else {
+            methodMap.put(node.getName().toString(), new MethodDeclarationWrapper(false, declaringClass, lineNumber, columnNumber, node));
         }
         return super.visit(node);
     }
 
-    public static Map<String, MethodDeclaration> collectMethods(File projectDirectory, List<String> excludedMethods) throws IOException {
-        Map<String, MethodDeclaration> methodMap = new HashMap<>();
+    public static Map<String, MethodDeclarationWrapper> collectMethods(File projectDirectory, ASTParser parser, List<String> exclusions) throws IOException {
+        Map<String, MethodDeclarationWrapper> methodMap = new HashMap<>();
         List<File> javaFiles = FileUtils.getJavaFilesRecursively(projectDirectory);
-
         for (File javaFile : javaFiles) {
             try {
                 String source = new String(Files.readAllBytes(javaFile.toPath()));
-                ASTParser parser = ASTParser.newParser(AST.JLS_Latest);
-
                 parser.setSource(source.toCharArray());
-                parser.setKind(ASTParser.K_COMPILATION_UNIT);
-
-                String[] classPathEntries = { projectDirectory.getAbsolutePath() + "/build/classes"};// not necessary to crete bindings but might be helpful later
-                String[] sourcePathEntries = { projectDirectory.getAbsolutePath() };
-                parser.setEnvironment(classPathEntries, sourcePathEntries, new String[] { "UTF-8" }, true);
-                parser.setResolveBindings(true);
-                parser.setBindingsRecovery(true);
-                parser.setCompilerOptions(JavaCore.getOptions());
-                parser.setUnitName("com.example.LoopAntiPattern");//could be random unit name
+                ASTGenerator.setParserArgs(projectDirectory, parser);
 
                 CompilationUnit cu = (CompilationUnit) parser.createAST(null);
-                cu.accept(new MethodCollector(methodMap, excludedMethods));
+                cu.accept(new MethodCollector(methodMap, cu, exclusions));
+
             } catch (IOException e) {
                 System.err.println("Error reading file: " + javaFile.getName());
                 e.printStackTrace();
-            }
-            catch (Exception e){
+            } catch (Exception e) {
                 System.err.println("Error creating AST " + e);
             }
         }
-
         return methodMap;
     }
 
+    public boolean shouldExcludeMethod(String methodKey) {
+        for (String pattern : this.exclusions) {
+            if (pattern.isEmpty())
+                return false;
+            if (methodKey.startsWith(pattern)) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

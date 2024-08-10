@@ -1,6 +1,5 @@
 {
   "projectDirectory": "../LoopAntiPattern",
-  "repositoryDirectory": "../LoopAntiPattern/src/main/java/com/example/LoopAntiPattern/data/repository",
-  "excludedClasses": ["ExcludeThis.java", "ExcludeThat.java"],
-  "excludedMethods": ["randomMethod"]
+  "thirdPartyMethodPaths": ["../LoopAntiPattern/src/main/java/com/example/LoopAntiPattern/data/repository"],
+  "exclusions": []
 }

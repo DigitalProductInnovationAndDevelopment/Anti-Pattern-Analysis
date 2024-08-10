@@ -1,13 +1,26 @@
 package tum.dpid.graph;
 
-import org.eclipse.jdt.core.dom.*;
-import java.util.*;
+import org.eclipse.jdt.core.dom.ASTVisitor;
+import org.eclipse.jdt.core.dom.ExpressionMethodReference;
+import org.eclipse.jdt.core.dom.LambdaExpression;
+import org.eclipse.jdt.core.dom.MethodDeclaration;
+import org.eclipse.jdt.core.dom.MethodInvocation;
+import org.eclipse.jdt.core.dom.SuperMethodReference;
+import org.eclipse.jdt.core.dom.TypeMethodReference;
+import tum.dpid.model.MethodDeclarationWrapper;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class CallGraph {
-    public static Map<String, List<String>> buildCallGraph(Map<String, MethodDeclaration> methodMap) {
+    public static Map<String, List<String>> buildCallGraph(Map<String, MethodDeclarationWrapper> methodMap) {
         Map<String, List<String>> callGraph = new HashMap<>();
 
-        for (MethodDeclaration method : methodMap.values()) {
+        for (MethodDeclarationWrapper wrapper : methodMap.values()) {
+            MethodDeclaration method = wrapper.getDeclaration();
             method.accept(new ASTVisitor() {
                 @Override
                 public boolean visit(MethodInvocation node) {
@@ -27,30 +40,6 @@ public class CallGraph {
                             callGraph.computeIfAbsent(callee, k -> new ArrayList<>()).add(caller);
                             return super.visit(lambdaNode);
                         }
-
-                        @Override
-                        public boolean visit(ExpressionMethodReference methodReferenceNode) {
-                            String caller = method.getName().toString();
-                            String callee = methodReferenceNode.getName().toString();
-                            callGraph.computeIfAbsent(callee, k -> new ArrayList<>()).add(caller);
-                            return super.visit(methodReferenceNode);
-                        }
-
-                        @Override
-                        public boolean visit(SuperMethodReference methodReferenceNode) {
-                            String caller = method.getName().toString();
-                            String callee = methodReferenceNode.getName().toString();
-                            callGraph.computeIfAbsent(callee, k -> new ArrayList<>()).add(caller);
-                            return super.visit(methodReferenceNode);
-                        }
-
-                        @Override
-                        public boolean visit(TypeMethodReference methodReferenceNode) {
-                            String caller = method.getName().toString();
-                            String callee = methodReferenceNode.getName().toString();
-                            callGraph.computeIfAbsent(callee, k -> new ArrayList<>()).add(caller);
-                            return super.visit(methodReferenceNode);
-                        }
                     });
                     return super.visit(node);
                 }
@@ -59,10 +48,6 @@ public class CallGraph {
                 public boolean visit(ExpressionMethodReference node) {
                     String caller = method.getName().toString();
                     String callee = node.getName().toString();
-
-                    System.out.println("Caller " + caller + " callee " + callee +"  resolveMethodBinding: " +node.resolveMethodBinding() + " declaration is " + node.resolveMethodBinding().getMethodDeclaration()
-                            + " key: " +  node.resolveMethodBinding().getKey() + " package name: " + node.resolveMethodBinding().getDeclaringClass().getPackage().getName());
-
                     callGraph.computeIfAbsent(callee, k -> new ArrayList<>()).add(caller);
                     return super.visit(node);
                 }
