@@ -1,12 +1,16 @@
 package tum.dpid.model.resources;
 
+/**
+ * Data model to parse snapshot results from sampling by using VisualVM
+ */
 public class MethodExecutionDetails {
-        private String name;
-        private double totalTime;
-        private double totalTimeCpu;
-        private int hits;
+        private final String name;
+        /* Time as ms*/
+        private final Double totalTime;
+        private final Double totalTimeCpu;
+        private final Integer hits;
 
-        public MethodExecutionDetails(String name, double totalTime, double totalTimeCpu, int hits) {
+        public MethodExecutionDetails(String name, Double totalTime, Double totalTimeCpu, Integer hits) {
             this.name = name;
             this.totalTime = totalTime;
             this.totalTimeCpu = totalTimeCpu;
@@ -17,11 +21,11 @@ public class MethodExecutionDetails {
             return name;
         }
 
-        public double getTotalTime() {
+        public Double getTotalTime() {
             return totalTime;
         }
 
-        public double getTotalTimeCpu() {
+        public Double getTotalTimeCpu() {
             return totalTimeCpu;
         }
 
