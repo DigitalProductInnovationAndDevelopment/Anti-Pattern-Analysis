@@ -1,282 +1,130 @@
 package tum.dpid;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.eclipse.jdt.core.dom.*;
+import org.eclipse.jdt.core.dom.ASTParser;
 import tum.dpid.config.AnalyzerConfig;
+import tum.dpid.file.CallChainUtils;
+import tum.dpid.file.FileUtils;
+import tum.dpid.graph.CallChainVisitor;
+import tum.dpid.graph.CallGraph;
+import tum.dpid.model.CallChainEntity;
+import tum.dpid.model.MethodDeclarationWrapper;
+import tum.dpid.parser.ASTGenerator;
+import tum.dpid.parser.MethodExtractor;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import static tum.dpid.parser.MethodCollector.collectMethods;
 
 public class CallChainAnalyzer {
 
-    public static void main(String[] args) throws IOException {
-
+    public static void main(String[] args) {
         ObjectMapper mapper = new ObjectMapper();
         AnalyzerConfig config;
 
         try {
-            //config file path will be read as a cmd line argument after building this tool as a jar application
             config = mapper.readValue(new File("config.json"), AnalyzerConfig.class);
         } catch (IOException e) {
             System.out.println("Error reading config file:\n" + e.getMessage());
             System.exit(1);
-            return; //This is added to prevent "variable might not be initialized" warnings. This line is unreachable
-        }
-
-        // find and collect methods under repository folder to create a target list
-        String directoryPath = config.getRepositoryDirectory();
-        Path dirPath = Paths.get(directoryPath);
-        List<String> DB_METHODS = new ArrayList<>();
-
-        try {
-            List<Path> javaFiles = Files.walk(dirPath)
-                    .filter(Files::isRegularFile)
-                    .filter(path -> path.toString().endsWith(".java"))
-                    .toList();
-
-            for (Path javaFile : javaFiles) {
-                DB_METHODS.addAll(extractMethodNames(javaFile, config.getExcludedClasses(), config.getExcludedMethods()));
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
+            return;
         }
 
         String projectDirectoryPath = config.getProjectDirectory();
-
         File projectDirectory = new File(projectDirectoryPath);
+
         if (!projectDirectory.exists() || !projectDirectory.isDirectory()) {
             System.out.println("Invalid project directory path.");
             return;
         }
 
-        Map<String, MethodDeclaration> methodMap = collectMethods(projectDirectory, config.getExcludedMethods());
-        Map<String, List<String>> callGraph = buildCallGraph(methodMap);
+        ASTParser parser = ASTGenerator.createParser();
 
-        for (String targetMethod : DB_METHODS) {
-            List<String> callChain = new ArrayList<>();
-            traceCallChainInOrder(targetMethod, callGraph, new HashSet<>(), callChain, methodMap);
-
-            if (callChain.isEmpty()) {
-                System.out.println("No calls found for method: " + targetMethod);
-            }
-
-            System.out.println("Call graph for method: " + targetMethod);
-            drawCallGraph(targetMethod, callGraph, 0, new HashSet<>());
-            System.out.println();
-
-        }
-    }
-
-    private static List<String> extractMethodNames(Path javaFilePath, List<String> excludedClasses, List<String> excludedMethods) throws IOException {
-        String className = javaFilePath.getFileName().toString();
-        if(excludedClasses.contains(className)) {
-            return Collections.emptyList();
-        }
-        String content = new String(Files.readAllBytes(javaFilePath));
-        ASTParser parser = ASTParser.newParser(AST.JLS8);
-        parser.setSource(content.toCharArray());
-        parser.setKind(ASTParser.K_COMPILATION_UNIT);
-
-        final CompilationUnit cu = (CompilationUnit) parser.createAST(null);
-        MethodNameVisitor visitor = new MethodNameVisitor(excludedMethods);
-        cu.accept(visitor);
-        return visitor.getMethodNames();
-    }
-
-    static class MethodNameVisitor extends ASTVisitor {
-        private final List<String> methodNames = new ArrayList<>();
-        private final List<String> excludedMethods;
-
-        public MethodNameVisitor(List<String> excludedMethods) {
-            this.excludedMethods = excludedMethods;
-        }
-        @Override
-        public boolean visit(MethodDeclaration node) {
-            if(!excludedMethods.contains(node.getName().getIdentifier())){
-                methodNames.add(node.getName().getIdentifier());
-            }
-            return super.visit(node);
-        }
-
-        public List<String> getMethodNames() {
-            return methodNames;
-        }
-    }
-
-    private static Map<String, MethodDeclaration> collectMethods(File projectDirectory, List<String> excludedMethods) throws IOException {
-        Map<String, MethodDeclaration> methodMap = new HashMap<>();
-        List<File> javaFiles = getJavaFiles(projectDirectory);
-
-        for (File javaFile : javaFiles) {
+        Set<String> DB_METHODS = new HashSet<>();
+        List<String> directoryPaths = config.getThirdPartyMethodPaths();
+        for (String directoryPath : directoryPaths) {
+            Path dirPath = Paths.get(directoryPath);
             try {
-                String source = new String(Files.readAllBytes(javaFile.toPath()));
-                ASTParser parser = ASTParser.newParser(AST.JLS_Latest);
-                parser.setSource(source.toCharArray());
-                parser.setKind(ASTParser.K_COMPILATION_UNIT);
-
-                CompilationUnit cu = (CompilationUnit) parser.createAST(null);
-                cu.accept(new MethodCollector(methodMap, excludedMethods));
+                List<Path> javaFiles = FileUtils.getJavaFiles(dirPath);
+                for (Path javaFile : javaFiles) {
+                    DB_METHODS.addAll(MethodExtractor.extractMethodNames(projectDirectory, parser, javaFile));
+                }
             } catch (IOException e) {
-                System.err.println("Error reading file: " + javaFile.getName());
                 e.printStackTrace();
             }
         }
 
-        return methodMap;
-    }
+        try {
+            Map<String, MethodDeclarationWrapper> methodMap = collectMethods(projectDirectory, parser, config.getExclusions());
+            Map<String, List<String>> callGraph = CallGraph.buildCallGraph(methodMap);
 
-    private static List<File> getJavaFiles(File directory) {
-        List<File> javaFiles = new ArrayList<>();
-        File[] files = directory.listFiles();
+            List<CallChainEntity> allEntryPointsWithAntiPattern = new ArrayList<>();
+            for (String targetMethod : DB_METHODS) {
+                List<CallChainEntity> callChain = new ArrayList<>();
+                CallChainVisitor.traceCallChainInOrder(targetMethod, null, callGraph, callChain, new HashSet<>(), methodMap);
 
-        if (files != null) {
-            for (File file : files) {
-                if (file.isDirectory()) {
-                    javaFiles.addAll(getJavaFiles(file));
-                } else if (file.getName().endsWith(".java")) {
-                    javaFiles.add(file);
-                }
-            }
-        }
-
-        return javaFiles;
-    }
-
-    private static Map<String, List<String>> buildCallGraph(Map<String, MethodDeclaration> methodMap) {
-        Map<String, List<String>> callGraph = new HashMap<>();
-
-        for (MethodDeclaration method : methodMap.values()) {
-            method.accept(new ASTVisitor() {
-                @Override
-                public boolean visit(MethodInvocation node) {
-                    String caller = method.getName().toString();
-                    String callee = node.getName().toString();
-                    callGraph.computeIfAbsent(callee, k -> new ArrayList<>()).add(caller);
-
-                    return super.visit(node);
+                if (callChain.isEmpty()) {
+                    System.out.println("No calls found for method: " + targetMethod);
                 }
 
-                @Override
-                public boolean visit(LambdaExpression node) {
-                    node.getBody().accept(new ASTVisitor() {
-                        @Override
-                        public boolean visit(MethodInvocation lambdaNode) {
-                            String caller = method.getName().toString();
-                            String callee = lambdaNode.getName().toString();
-                            callGraph.computeIfAbsent(callee, k -> new ArrayList<>()).add(caller);
-
-                            return super.visit(lambdaNode);
+                List<List<CallChainEntity>> allCallChains = new ArrayList<>();
+                for (CallChainEntity entity : callChain) {
+                    if (allCallChains.isEmpty()) {
+                        List<CallChainEntity> newCallChain = new ArrayList<>();
+                        newCallChain.add(entity);
+                        allCallChains.add(newCallChain);
+                    }
+                    List<CallChainEntity> tempChain = null;
+                    for (List<CallChainEntity> callChainTemp : allCallChains) {
+                        tempChain = new ArrayList<>(callChainTemp);
+                        CallChainEntity entityFromAllChains = callChainTemp.get(callChainTemp.size() - 1);
+                        if (entity.getInvokedMethod() != null && entity.getInvokedMethod().equals(entityFromAllChains.getName())) {
+                            tempChain.add(entity);
+                            break;
                         }
+                    }
+                    allCallChains.add(tempChain);
+                }
 
-                        @Override
-                        public boolean visit(ExpressionMethodReference methodReferenceNode) {
-                            String caller = method.getName().toString();
-                            String callee = methodReferenceNode.getName().toString();
-                            callGraph.computeIfAbsent(callee, k -> new ArrayList<>()).add(caller);
-                            return super.visit(methodReferenceNode);
+                CallChainUtils.removeSublists(allCallChains);
+                allCallChains.forEach(Collections::reverse);
+
+                allCallChains.forEach(chain -> {
+                    List<CallChainEntity> entitiesWithLoops = new ArrayList<>();
+                    CallChainEntity entryMethod = chain.get(0);
+                    boolean hasAntiPattern = false;
+                    for (CallChainEntity callChainEntity : chain) {
+                        if (callChainEntity.isInvokesChildInLoop() && !allEntryPointsWithAntiPattern.contains(entryMethod)) {
+                            hasAntiPattern = true;
+                            allEntryPointsWithAntiPattern.add(entryMethod);
+                            entitiesWithLoops.add(callChainEntity);
                         }
+                    }
 
-                        @Override
-                        public boolean visit(SuperMethodReference methodReferenceNode) {
-                            String caller = method.getName().toString();
-                            String callee = methodReferenceNode.getName().toString();
-                            callGraph.computeIfAbsent(callee, k -> new ArrayList<>()).add(caller);
-                            return super.visit(methodReferenceNode);
-                        }
+                    if (hasAntiPattern) {
+                        MethodDeclarationWrapper method = methodMap.get(entryMethod.getName());
+                        System.out.println("Call chain starting with method " + entryMethod.getName() + " at position " + method.getLineNumber() + ":" + method.getColumnNumber() + " in file: " + method.getDeclaringClass() + " has a loop anti pattern!");
+                        entitiesWithLoops.forEach(entity -> {
+                            MethodDeclarationWrapper entityMethod = methodMap.get(entity.getName());
+                            System.out.println("\tMethod " + entity.getName() + " at position " + entityMethod.getLineNumber() + ":" + entityMethod.getColumnNumber() + " in file: " + entityMethod.getDeclaringClass() + " invokes method: " + entity.getInvokedMethod() + " in a LOOP!");
+                        });
+                        System.out.println();
+                    }
+                });
 
-                        @Override
-                        public boolean visit(TypeMethodReference methodReferenceNode) {
-                            String caller = method.getName().toString();
-                            String callee = methodReferenceNode.getName().toString();
-                            callGraph.computeIfAbsent(callee, k -> new ArrayList<>()).add(caller);
-                            return super.visit(methodReferenceNode);
-                        }
-
-                    });
-                    return super.visit(node);
-                }
-
-                @Override
-                public boolean visit(ExpressionMethodReference node) {
-                    String caller = method.getName().toString();
-                    String callee = node.getName().toString();
-                    callGraph.computeIfAbsent(callee, k -> new ArrayList<>()).add(caller);
-                    return super.visit(node);
-                }
-
-                @Override
-                public boolean visit(SuperMethodReference node) {
-                    String caller = method.getName().toString();
-                    String callee = node.getName().toString();
-                    callGraph.computeIfAbsent(callee, k -> new ArrayList<>()).add(caller);
-                    return super.visit(node);
-                }
-
-                @Override
-                public boolean visit(TypeMethodReference node) {
-                    String caller = method.getName().toString();
-                    String callee = node.getName().toString();
-                    callGraph.computeIfAbsent(callee, k -> new ArrayList<>()).add(caller);
-                    return super.visit(node);
-                }
-            });
-        }
-
-        return callGraph;
-    }
-
-    private static void traceCallChainInOrder(String methodName, Map<String, List<String>> callGraph, Set<String> visited, List<String> callChain, Map<String, MethodDeclaration> methodMap) {
-        if (!visited.add(methodName)) {
-            return;
-        }
-        callChain.add(methodName);
-        List<String> callees = callGraph.get(methodName);
-        if (callees != null) {
-            for (String callee : callees) {
-                traceCallChainInOrder(callee, callGraph, visited, callChain, methodMap);
             }
-        }
-    }
-
-    private static void drawCallGraph(String methodName, Map<String, List<String>> callGraph, int level, Set<String> visited) {
-        if (!visited.add(methodName)) {
-            return;
-        }
-        printIndented(methodName, level);
-        List<String> callers = callGraph.get(methodName);
-        if (callers != null) {
-            for (String caller : callers) {
-                drawCallGraph(caller, callGraph, level + 1, visited);
-            }
-        }
-    }
-
-    private static void printIndented(String methodName, int level) {
-        for (int i = 0; i < level; i++) {
-            System.out.print("---- ");
-        }
-        System.out.println(methodName);
-    }
-
-    static class MethodCollector extends ASTVisitor {
-        private final Map<String, MethodDeclaration> methodMap;
-        private final List<String> excludedMethods;
-
-        MethodCollector(Map<String, MethodDeclaration> methodMap, List<String> excludedMethods) {
-            this.methodMap = methodMap;
-            this.excludedMethods = excludedMethods;
-        }
-
-        @Override
-        public boolean visit(MethodDeclaration node) {
-            if(!excludedMethods.contains(node.getName().toString())) {
-                methodMap.put(node.getName().toString(), node);
-            }
-            return super.visit(node);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }
