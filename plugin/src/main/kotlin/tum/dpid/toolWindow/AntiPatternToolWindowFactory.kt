@@ -324,7 +324,7 @@ class AntiPatternToolWindowFactory : ToolWindowFactory, DumbAware {
         val threshold = methodExecutionThresholdField.text.toIntOrNull() ?: 2000
         val config = mapOf(
             "projectDirectory" to projectDirectoryField.text,
-            "thirdPartyMethodPaths" to listOf(thirdPartyMethodPathField.text),
+            "thirdPartyMethodPaths" to thirdPartyMethodPathField.text.split(",").map { it.trim() }.filter { it.isNotEmpty() },
             "exclusions" to exclusionsField.text.split(",").map { it.trim() }.filter { it.isNotEmpty() },
             "snapshotCsvFilePath" to snapshotCsvFilePathField.text,
             "methodExecutionThresholdMs" to threshold

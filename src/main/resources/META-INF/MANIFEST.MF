@@ -1,0 +1,16 @@
+Manifest-Version: 1.0
+Main-Class: tum.dpid.CallChainAnalyzer
+Class-Path: org.eclipse.equinox.preferences-3.11.100.jar org.eclipse.cor
+ e.contenttype-3.9.400.jar commons-beanutils-1.9.4.jar commons-lang3-3.1
+ 2.0.jar org.eclipse.core.filesystem-1.10.400.jar jgrapht-core-1.5.1.jar
+  org.eclipse.jdt.core-3.28.0.jar org.eclipse.text-3.14.100.jar opencsv-
+ 5.7.1.jar jheaps-0.13.jar commons-collections4-4.4.jar jackson-core-2.1
+ 7.1.jar org.eclipse.core.resources-3.20.200.jar org.eclipse.core.jobs-3
+ .15.300.jar org.eclipse.core.expressions-3.9.400.jar org.eclipse.equino
+ x.common-3.19.100.jar org.eclipse.core.runtime-3.31.100.jar org.eclipse
+ .equinox.registry-3.12.100.jar org.eclipse.equinox.app-1.7.100.jar jack
+ son-databind-2.17.1.jar javassist-3.12.1.GA.jar commons-collections-3.2
+ .2.jar commons-logging-1.2.jar org.eclipse.core.commands-3.12.100.jar o
+ rg.osgi.service.prefs-1.1.2.jar osgi.annotation-8.0.1.jar org.eclipse.o
+ sgi-3.20.0.jar jackson-annotations-2.17.1.jar commons-text-1.10.0.jar
+
