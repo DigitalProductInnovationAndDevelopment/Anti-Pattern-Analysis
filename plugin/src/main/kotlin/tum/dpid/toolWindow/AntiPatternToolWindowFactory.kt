@@ -1,14 +1,22 @@
 package tum.dpid.toolWindow
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.content.ContentFactory
+import com.intellij.util.io.readText
 import com.intellij.util.ui.JBUI
+import org.json.JSONArray
+import org.json.JSONObject
 import java.awt.*
+import java.awt.event.FocusAdapter
+import java.awt.event.FocusEvent
 import java.io.BufferedReader
 import java.io.IOException
 import java.io.InputStreamReader
@@ -16,14 +24,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import javax.swing.*
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.util.io.readText
-import org.json.JSONArray
-import org.json.JSONObject
-import java.awt.event.FocusAdapter
-import java.awt.event.FocusEvent
 
 class AntiPatternToolWindowFactory : ToolWindowFactory, DumbAware {
     companion object {
@@ -47,7 +47,6 @@ class AntiPatternToolWindowFactory : ToolWindowFactory, DumbAware {
     }
 
 
-
     private lateinit var projectDirectoryField: JTextField
     private lateinit var thirdPartyMethodPathField: JTextField
     private lateinit var exclusionsField: JTextField
@@ -65,23 +64,69 @@ class AntiPatternToolWindowFactory : ToolWindowFactory, DumbAware {
 
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
         this.project = project
-        val panel = JPanel(GridBagLayout())
+        val mainPanel = JPanel(GridBagLayout())
         val gbc = GridBagConstraints().apply {
             insets = JBUI.insets(10)
             fill = GridBagConstraints.HORIZONTAL
+            gridx = 0
+            weightx = 1.0
         }
 
-        addLogoAndTitle(panel, gbc)
-        addInfoLabel(panel, gbc)
-        addConfigFields(panel, gbc)
-        addRunButton(panel, gbc)
-        addOutputArea(panel, gbc)
+        addLogoAndTitle(mainPanel, gbc)
 
-        val content = ContentFactory.getInstance().createContent(panel, "", false)
+        gbc.gridy++
+        addInfoLabel(mainPanel, gbc)
+
+        gbc.gridy++
+        val configPanel = createCollapsibleConfigPanel()
+        mainPanel.add(createCollapsiblePanel("Configuration", configPanel), gbc)
+
+        gbc.gridy++
+        mainPanel.add(createRunButton(), gbc)
+
+        gbc.gridy++
+        gbc.weighty = 1.0
+        gbc.fill = GridBagConstraints.BOTH
+        mainPanel.add(JBScrollPane(outputArea).apply {
+            border = JBUI.Borders.empty(10)
+        }, gbc)
+
+        val scrollPane = JBScrollPane(mainPanel)
+        val content = ContentFactory.getInstance().createContent(scrollPane, "", false)
         toolWindow.contentManager.addContent(content)
 
         // Automatically set the project directory field
         projectDirectoryField.text = project.basePath ?: ""
+    }
+
+    private fun createCollapsibleConfigPanel(): JPanel {
+        val configPanel = JPanel(GridBagLayout())
+        val gbc = GridBagConstraints().apply {
+            insets = JBUI.insets(5)
+            fill = GridBagConstraints.HORIZONTAL
+            gridx = 0
+            gridy = 0
+            weightx = 1.0
+        }
+
+        addConfigFields(configPanel, gbc)
+
+        return configPanel
+    }
+
+    private fun createCollapsiblePanel(title: String, content: JComponent): JPanel {
+        val panel = JPanel(BorderLayout())
+        val toggleButton = JButton(title).apply {
+            addActionListener {
+                content.isVisible = !content.isVisible
+                text = if (content.isVisible) "▼ $title" else "► $title"
+            }
+        }
+        panel.add(toggleButton, BorderLayout.NORTH)
+        panel.add(content, BorderLayout.CENTER)
+        content.isVisible = false
+        toggleButton.text = "► $title"
+        return panel
     }
 
     private fun addLogoAndTitle(panel: JPanel, gbc: GridBagConstraints) {
@@ -368,7 +413,8 @@ class AntiPatternToolWindowFactory : ToolWindowFactory, DumbAware {
         val line = params.find { it.startsWith("line=") }?.substringAfter("=")?.toIntOrNull()
 
         if (filePath != null && line != null) {
-            val virtualFile = LocalFileSystem.getInstance().findFileByPath(project.basePath + "/src/main/java/$filePath.java")
+            val virtualFile =
+                LocalFileSystem.getInstance().findFileByPath(project.basePath + "/src/main/java/$filePath.java")
             if (virtualFile != null) {
                 val fileEditorManager = FileEditorManager.getInstance(project)
                 fileEditorManager.openFile(virtualFile, true)
