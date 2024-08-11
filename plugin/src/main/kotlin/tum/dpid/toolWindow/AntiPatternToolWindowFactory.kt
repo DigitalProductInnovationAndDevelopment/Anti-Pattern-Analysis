@@ -17,6 +17,13 @@ import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import javax.swing.*
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.util.io.readText
+import org.json.JSONArray
+import org.json.JSONObject
+import java.awt.event.FocusAdapter
+import java.awt.event.FocusEvent
 
 class AntiPatternToolWindowFactory : ToolWindowFactory, DumbAware {
     companion object {
@@ -25,21 +32,39 @@ class AntiPatternToolWindowFactory : ToolWindowFactory, DumbAware {
 
     private var tempDir: Path? = null
 
-    private val outputArea = JTextArea(10, 50).apply {
+    private lateinit var project: Project
+    private val outputArea = JEditorPane().apply {
+        contentType = "text/html"
         isEditable = false
-        lineWrap = true
-        wrapStyleWord = true
-        selectionColor = JBColor.YELLOW
-        border = JBUI.Borders.empty(10)
+        addHyperlinkListener { e ->
+            if (e.eventType == javax.swing.event.HyperlinkEvent.EventType.ACTIVATED) {
+                val url = e.description.toString()
+                if (url.startsWith("intellij://open")) {
+                    openFileAtLine(url)
+                }
+            }
+        }
     }
+
+
 
     private lateinit var projectDirectoryField: JTextField
     private lateinit var thirdPartyMethodPathField: JTextField
     private lateinit var exclusionsField: JTextField
     private lateinit var snapshotCsvFilePathField: JTextField
     private lateinit var methodExecutionThresholdField: JTextField
+    private val thirdPartyMethodPathWarning = JLabel("Warning: Please enter Third Party Method Path.").apply {
+        foreground = JBColor.RED
+        isVisible = false
+    }
+
+    private val projectPathWarning = JLabel("Warning: Please enter Project Path.").apply {
+        foreground = JBColor.RED
+        isVisible = false
+    }
 
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
+        this.project = project
         val panel = JPanel(GridBagLayout())
         val gbc = GridBagConstraints().apply {
             insets = JBUI.insets(10)
@@ -54,6 +79,9 @@ class AntiPatternToolWindowFactory : ToolWindowFactory, DumbAware {
 
         val content = ContentFactory.getInstance().createContent(panel, "", false)
         toolWindow.contentManager.addContent(content)
+
+        // Automatically set the project directory field
+        projectDirectoryField.text = project.basePath ?: ""
     }
 
     private fun addLogoAndTitle(panel: JPanel, gbc: GridBagConstraints) {
@@ -105,28 +133,72 @@ class AntiPatternToolWindowFactory : ToolWindowFactory, DumbAware {
         panel.add(projectDirectoryField, gbc)
 
         gbc.gridy++
+        panel.add(projectPathWarning, gbc)
+
+        gbc.gridy++
         panel.add(JLabel("Third Party Method Path:"), gbc)
         gbc.gridy++
-        thirdPartyMethodPathField = JTextField()
+        thirdPartyMethodPathField = JTextField().apply {
+            toolTipText = "Enter the path to third-party method definitions"
+            text = "e.g., /path/to/thirdparty/methods"
+            foreground = JBColor.GRAY
+            addFocusListener(PlaceholderFocusListener(this, "e.g., /path/to/thirdparty/methods"))
+        }
         panel.add(thirdPartyMethodPathField, gbc)
 
         gbc.gridy++
-        panel.add(JLabel("Exclusions (comma-separated):"), gbc)
+        panel.add(thirdPartyMethodPathWarning, gbc)
+
+        // Adding the Exclusions field with focus listener
         gbc.gridy++
-        exclusionsField = JTextField()
+        panel.add(JLabel("Exclusions (Optional):"), gbc)
+        gbc.gridy++
+        exclusionsField = JTextField().apply {
+            toolTipText = "Enter comma-separated patterns to exclude"
+            text = "e.g., com.example.*, org.test.*"  // Placeholder text
+            foreground = JBColor.GRAY
+            addFocusListener(PlaceholderFocusListener(this, "e.g., com.example.*, org.test.*"))
+        }
         panel.add(exclusionsField, gbc)
 
         gbc.gridy++
         panel.add(JLabel("Snapshot CSV File Path:"), gbc)
         gbc.gridy++
-        snapshotCsvFilePathField = JTextField()
+        snapshotCsvFilePathField = JTextField().apply {
+            toolTipText = "Enter the path to the snapshot CSV file"
+            text = "e.g., /path/to/snapshot.csv"
+            foreground = JBColor.GRAY
+            addFocusListener(PlaceholderFocusListener(this, "e.g., /path/to/snapshot.csv"))
+        }
         panel.add(snapshotCsvFilePathField, gbc)
 
         gbc.gridy++
         panel.add(JLabel("Method Execution Threshold (ms):"), gbc)
         gbc.gridy++
-        methodExecutionThresholdField = JTextField()
+        methodExecutionThresholdField = JTextField("2000").apply {
+            toolTipText = "Set the execution time threshold for methods (default: 2000ms)"
+        }
         panel.add(methodExecutionThresholdField, gbc)
+    }
+
+    // Focus listener class to manage placeholder text
+    private class PlaceholderFocusListener(
+        private val textField: JTextField,
+        private val placeholder: String
+    ) : FocusAdapter() {
+        override fun focusGained(e: FocusEvent) {
+            if (textField.text == placeholder) {
+                textField.text = ""
+                textField.foreground = JBColor.BLACK
+            }
+        }
+
+        override fun focusLost(e: FocusEvent) {
+            if (textField.text.isEmpty()) {
+                textField.text = placeholder
+                textField.foreground = JBColor.GRAY
+            }
+        }
     }
 
     private fun addRunButton(panel: JPanel, gbc: GridBagConstraints) {
@@ -162,6 +234,22 @@ class AntiPatternToolWindowFactory : ToolWindowFactory, DumbAware {
     }
 
     private fun runAnalysis() {
+        if (thirdPartyMethodPathField.text.isBlank() || thirdPartyMethodPathField.text == "e.g., /path/to/thirdparty/methods") {
+            thirdPartyMethodPathWarning.isVisible = true
+            outputArea.text = "Error: Third Party Method Path is required."
+            return
+        } else {
+            thirdPartyMethodPathWarning.isVisible = false
+        }
+
+        if (projectDirectoryField.text.isBlank()) {
+            projectPathWarning.isVisible = true
+            outputArea.text = "Error: Project Path is required."
+            return
+        } else {
+            projectPathWarning.isVisible = false
+        }
+
         tempDir = Files.createTempDirectory("antipattern-analysis")
         val tempJarPath = tempDir?.resolve("anti-pattern-detector-1.0.jar") ?: run {
             println("Error: tempDir is null")
@@ -173,7 +261,7 @@ class AntiPatternToolWindowFactory : ToolWindowFactory, DumbAware {
 
             val configContent = createConfigContent()
             val output = executeJar(tempJarPath, configContent)
-            outputArea.text = "⁠  \n$output\n  ⁠"
+            displayResults(output)
         } catch (e: Exception) {
             outputArea.text = "Error: ${e.message}"
         } finally {
@@ -215,7 +303,7 @@ class AntiPatternToolWindowFactory : ToolWindowFactory, DumbAware {
 
         val jsonFile = outputDir.resolve("analysisOutput.json")
         return if (Files.exists(jsonFile)) {
-            Files.readString(jsonFile)
+            jsonFile.readText()
         } else {
             "Output JSON file not found. Process output:\n$output"
         }
@@ -243,4 +331,51 @@ class AntiPatternToolWindowFactory : ToolWindowFactory, DumbAware {
         } ?: println("tempDir is null, nothing to clean up")
         tempDir = null
     }
+
+    private fun displayResults(jsonString: String) {
+        val jsonArray = JSONArray(jsonString)
+        val htmlBuilder = StringBuilder()
+        htmlBuilder.append("<html><body style='font-family: Arial, sans-serif;'>")
+        htmlBuilder.append("<h2>Anti-Pattern Analysis Results</h2>")
+
+        for ((index, item) in jsonArray.withIndex()) {
+            val antiPattern = item as JSONObject
+
+            val invokedSubMethodDetails = antiPattern.getJSONArray("invokedSubMethodDetails").getJSONObject(0)
+            val className = invokedSubMethodDetails.getString("className").replace(".", "/")
+            val lineNumber = invokedSubMethodDetails.getInt("lineNumber")
+            val columnNumber = invokedSubMethodDetails.getInt("columnNumber")
+
+            htmlBuilder.append("<h3>${index + 1}. Method: ${antiPattern.getString("methodName")}</h3>")
+            htmlBuilder.append("<p>Class: ${antiPattern.getString("className")}</p>")
+            htmlBuilder.append("<p>Location: Line ${lineNumber}, Column ${columnNumber}</p>")
+            htmlBuilder.append("<p>Severity: ${antiPattern.getString("severity")}</p>")
+            htmlBuilder.append("<p>Issue: Potential performance issue in loop</p>")
+            htmlBuilder.append("<p>Details: This method may cause performance problems if executed in a loop.</p>")
+
+            htmlBuilder.append("<p><a href='intellij://open?file=$className&line=$lineNumber'>Jump to code</a></p>")
+
+            htmlBuilder.append("<hr>")
+        }
+
+        htmlBuilder.append("</body></html>")
+        outputArea.text = htmlBuilder.toString()
+    }
+
+    private fun openFileAtLine(url: String) {
+        val params = url.substringAfter("?").split("&")
+        val filePath = params.find { it.startsWith("file=") }?.substringAfter("=")
+        val line = params.find { it.startsWith("line=") }?.substringAfter("=")?.toIntOrNull()
+
+        if (filePath != null && line != null) {
+            val virtualFile = LocalFileSystem.getInstance().findFileByPath(project.basePath + "/src/main/java/$filePath.java")
+            if (virtualFile != null) {
+                val fileEditorManager = FileEditorManager.getInstance(project)
+                fileEditorManager.openFile(virtualFile, true)
+                val editor = fileEditorManager.selectedTextEditor
+                editor?.caretModel?.moveToLogicalPosition(com.intellij.openapi.editor.LogicalPosition(line - 1, 0))
+            }
+        }
+    }
+
 }
