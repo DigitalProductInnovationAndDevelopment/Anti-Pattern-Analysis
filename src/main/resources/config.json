@@ -1,0 +1,7 @@
+{
+  "projectDirectory": "../LoopAntiPattern",
+  "thirdPartyMethodPaths": ["../LoopAntiPattern/src/main/java/com/example/LoopAntiPattern/data/repository"],
+  "exclusions": [],
+  "snapshotCsvFilePath": "../../fromItestra/LoopAntiPattern/src/main/resources/snapshot2.csv",
+  "methodExecutionThresholdMs": 2000
+}

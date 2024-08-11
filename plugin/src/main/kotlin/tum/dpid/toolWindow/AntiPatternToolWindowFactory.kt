@@ -10,15 +10,20 @@ import com.intellij.ui.content.ContentFactory
 import com.intellij.util.ui.JBUI
 import java.awt.*
 import java.io.BufferedReader
+import java.io.IOException
 import java.io.InputStreamReader
 import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import javax.swing.*
+import com.fasterxml.jackson.databind.ObjectMapper
 
 class AntiPatternToolWindowFactory : ToolWindowFactory, DumbAware {
     companion object {
-        private const val JAR_RESOURCE_PATH = "/jar/CodeOutput.jar"
+        private const val JAR_RESOURCE_PATH = "/jar/anti-pattern-detector-1.0.jar"
     }
+
+    private var tempDir: Path? = null
 
     private val outputArea = JTextArea(10, 50).apply {
         isEditable = false
@@ -27,6 +32,12 @@ class AntiPatternToolWindowFactory : ToolWindowFactory, DumbAware {
         selectionColor = JBColor.YELLOW
         border = JBUI.Borders.empty(10)
     }
+
+    private lateinit var projectDirectoryField: JTextField
+    private lateinit var thirdPartyMethodPathField: JTextField
+    private lateinit var exclusionsField: JTextField
+    private lateinit var snapshotCsvFilePathField: JTextField
+    private lateinit var methodExecutionThresholdField: JTextField
 
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
         val panel = JPanel(GridBagLayout())
@@ -37,6 +48,7 @@ class AntiPatternToolWindowFactory : ToolWindowFactory, DumbAware {
 
         addLogoAndTitle(panel, gbc)
         addInfoLabel(panel, gbc)
+        addConfigFields(panel, gbc)
         addRunButton(panel, gbc)
         addOutputArea(panel, gbc)
 
@@ -82,6 +94,41 @@ class AntiPatternToolWindowFactory : ToolWindowFactory, DumbAware {
         )
     }
 
+    private fun addConfigFields(panel: JPanel, gbc: GridBagConstraints) {
+        gbc.gridx = 0
+        gbc.gridy++
+        gbc.gridwidth = 2
+
+        panel.add(JLabel("Project Directory:"), gbc)
+        gbc.gridy++
+        projectDirectoryField = JTextField()
+        panel.add(projectDirectoryField, gbc)
+
+        gbc.gridy++
+        panel.add(JLabel("Third Party Method Path:"), gbc)
+        gbc.gridy++
+        thirdPartyMethodPathField = JTextField()
+        panel.add(thirdPartyMethodPathField, gbc)
+
+        gbc.gridy++
+        panel.add(JLabel("Exclusions (comma-separated):"), gbc)
+        gbc.gridy++
+        exclusionsField = JTextField()
+        panel.add(exclusionsField, gbc)
+
+        gbc.gridy++
+        panel.add(JLabel("Snapshot CSV File Path:"), gbc)
+        gbc.gridy++
+        snapshotCsvFilePathField = JTextField()
+        panel.add(snapshotCsvFilePathField, gbc)
+
+        gbc.gridy++
+        panel.add(JLabel("Method Execution Threshold (ms):"), gbc)
+        gbc.gridy++
+        methodExecutionThresholdField = JTextField()
+        panel.add(methodExecutionThresholdField, gbc)
+    }
+
     private fun addRunButton(panel: JPanel, gbc: GridBagConstraints) {
         gbc.gridy++
         gbc.gridwidth = 2
@@ -115,35 +162,85 @@ class AntiPatternToolWindowFactory : ToolWindowFactory, DumbAware {
     }
 
     private fun runAnalysis() {
-        val tempDir = Files.createTempDirectory("antipattern-analysis")
-        val tempJarPath = tempDir.resolve("CodeOutput.jar")
+        tempDir = Files.createTempDirectory("antipattern-analysis")
+        val tempJarPath = tempDir?.resolve("anti-pattern-detector-1.0.jar") ?: run {
+            println("Error: tempDir is null")
+            return
+        }
 
         try {
             copyJarToTempFile(tempJarPath)
-            val output = executeJar(tempJarPath)
+
+            val configContent = createConfigContent()
+            val output = executeJar(tempJarPath, configContent)
             outputArea.text = "⁠  \n$output\n  ⁠"
         } catch (e: Exception) {
             outputArea.text = "Error: ${e.message}"
         } finally {
-            cleanupTempFiles(tempJarPath, tempDir)
+            cleanupTempFiles()
         }
     }
 
-    private fun copyJarToTempFile(tempJarPath: java.nio.file.Path) {
+    private fun copyJarToTempFile(tempJarPath: Path) {
         javaClass.getResourceAsStream(JAR_RESOURCE_PATH)?.use { inputStream ->
             Files.copy(inputStream, tempJarPath, StandardCopyOption.REPLACE_EXISTING)
         } ?: throw IllegalStateException("Could not find CodeOutput.jar in resources.")
     }
 
-    private fun executeJar(jarPath: java.nio.file.Path): String {
-        val process = Runtime.getRuntime().exec("java -jar $jarPath")
-        return BufferedReader(InputStreamReader(process.inputStream)).use { reader ->
+    private fun createConfigContent(): String {
+        val threshold = methodExecutionThresholdField.text.toIntOrNull() ?: 2000
+        val config = mapOf(
+            "projectDirectory" to projectDirectoryField.text,
+            "thirdPartyMethodPaths" to listOf(thirdPartyMethodPathField.text),
+            "exclusions" to exclusionsField.text.split(",").map { it.trim() }.filter { it.isNotEmpty() },
+            "snapshotCsvFilePath" to snapshotCsvFilePathField.text,
+            "methodExecutionThresholdMs" to threshold
+        )
+        return ObjectMapper().writeValueAsString(config)
+    }
+
+    private fun executeJar(jarPath: Path, configContent: String): String {
+        val outputDir = jarPath.parent
+
+        val process = ProcessBuilder("java", "-jar", jarPath.toString(), configContent)
+            .directory(outputDir.toFile())
+            .redirectErrorStream(true)
+            .start()
+
+        val output = BufferedReader(InputStreamReader(process.inputStream)).use { reader ->
             reader.readText()
+        }
+
+        process.waitFor()
+
+        val jsonFile = outputDir.resolve("analysisOutput.json")
+        return if (Files.exists(jsonFile)) {
+            Files.readString(jsonFile)
+        } else {
+            "Output JSON file not found. Process output:\n$output"
         }
     }
 
-    private fun cleanupTempFiles(jarPath: java.nio.file.Path, dirPath: java.nio.file.Path) {
-        Files.deleteIfExists(jarPath)
-        Files.deleteIfExists(dirPath)
+    private fun cleanupTempFiles() {
+        tempDir?.let { dir ->
+            try {
+                println("Attempting to delete directory: ${dir.toAbsolutePath()}")
+                if (Files.exists(dir)) {
+                    Files.walk(dir)
+                        .sorted(Comparator.reverseOrder())
+                        .forEach { path ->
+                            println("Deleting: $path")
+                            Files.deleteIfExists(path)
+                        }
+                    println("Directory deleted successfully")
+                } else {
+                    println("Directory does not exist: $dir")
+                }
+            } catch (e: IOException) {
+                println("Error while deleting directory: ${e.message}")
+                e.printStackTrace()
+            }
+        } ?: println("tempDir is null, nothing to clean up")
+        tempDir = null
     }
 }
