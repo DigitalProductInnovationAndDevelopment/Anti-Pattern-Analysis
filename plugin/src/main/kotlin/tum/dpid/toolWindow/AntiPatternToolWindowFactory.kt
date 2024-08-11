@@ -88,7 +88,7 @@ class AntiPatternToolWindowFactory : ToolWindowFactory, DumbAware {
         gbc.weighty = 1.0
         gbc.fill = GridBagConstraints.BOTH
         mainPanel.add(JBScrollPane(outputArea).apply {
-            border = JBUI.Borders.empty(10)
+            background = JBColor.BLACK
         }, gbc)
 
         val scrollPane = JBScrollPane(mainPanel)
@@ -380,7 +380,7 @@ class AntiPatternToolWindowFactory : ToolWindowFactory, DumbAware {
     private fun displayResults(jsonString: String) {
         val jsonArray = JSONArray(jsonString)
         val htmlBuilder = StringBuilder()
-        htmlBuilder.append("<html><body style='font-family: Arial, sans-serif;'>")
+        htmlBuilder.append("<html><body style='font-family: Arial, sans-serif; padding: 20px;'>")
         htmlBuilder.append("<h2>Anti-Pattern Analysis Results</h2>")
 
         for ((index, item) in jsonArray.withIndex()) {
