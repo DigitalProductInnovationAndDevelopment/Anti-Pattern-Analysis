@@ -1,0 +1,46 @@
+[ {
+  "methodName" : "createDummyProducts",
+  "className" : "com.example.LoopAntiPattern.api.ProductController",
+  "lineNumber" : 47,
+  "columnNumber" : 4,
+  "executionTime" : 95.0,
+  "analysisType" : "STATIC",
+  "severity" : "LOW",
+  "invokedSubMethodDetails" : [ {
+    "methodName" : "updateProducts",
+    "className" : "com.example.LoopAntiPattern.service.ProductService",
+    "lineNumber" : 54,
+    "columnNumber" : 4,
+    "invokedMethod" : "updateSingleProduct"
+  } ]
+}, {
+  "methodName" : "update",
+  "className" : "com.example.LoopAntiPattern.api.ProductController",
+  "lineNumber" : 42,
+  "columnNumber" : 4,
+  "executionTime" : 12596.3,
+  "analysisType" : "BOTH",
+  "severity" : "HIGH",
+  "invokedSubMethodDetails" : [ {
+    "methodName" : "updateProducts",
+    "className" : "com.example.LoopAntiPattern.service.ProductService",
+    "lineNumber" : 54,
+    "columnNumber" : 4,
+    "invokedMethod" : "updateSingleProduct"
+  } ]
+}, {
+  "methodName" : "findByArticleNumbers",
+  "className" : "com.example.LoopAntiPattern.api.ProductController",
+  "lineNumber" : 32,
+  "columnNumber" : 4,
+  "executionTime" : 801344.5,
+  "analysisType" : "BOTH",
+  "severity" : "HIGH",
+  "invokedSubMethodDetails" : [ {
+    "methodName" : "getProductsByArticleNumbers",
+    "className" : "com.example.LoopAntiPattern.service.ProductService",
+    "lineNumber" : 35,
+    "columnNumber" : 4,
+    "invokedMethod" : "getProductsByArticleNumber"
+  } ]
+} ]
