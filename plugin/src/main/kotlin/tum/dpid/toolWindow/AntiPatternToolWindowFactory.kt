@@ -25,6 +25,8 @@ import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import javax.swing.*
 
+private const val thirdPartyPathPlaceholder = "e.g., /path/to/thirdparty/methods"
+
 class AntiPatternToolWindowFactory : ToolWindowFactory, DumbAware {
     companion object {
         private const val JAR_RESOURCE_PATH = "/jar/anti-pattern-detector-1.0.jar"
@@ -185,9 +187,9 @@ class AntiPatternToolWindowFactory : ToolWindowFactory, DumbAware {
         gbc.gridy++
         thirdPartyMethodPathField = JTextField().apply {
             toolTipText = "Enter the path to third-party method definitions"
-            text = "e.g., /path/to/thirdparty/methods"
+            text = thirdPartyPathPlaceholder
             foreground = JBColor.GRAY
-            addFocusListener(PlaceholderFocusListener(this, "e.g., /path/to/thirdparty/methods"))
+            addFocusListener(PlaceholderFocusListener(this, thirdPartyPathPlaceholder))
         }
         panel.add(thirdPartyMethodPathField, gbc)
 
@@ -196,7 +198,7 @@ class AntiPatternToolWindowFactory : ToolWindowFactory, DumbAware {
 
         // Adding the Exclusions field with focus listener
         gbc.gridy++
-        panel.add(JLabel("Exclusions (Optional):"), gbc)
+        panel.add(JLabel("[Optional] Exclusions:"), gbc)
         gbc.gridy++
         exclusionsField = JTextField().apply {
             toolTipText = "Enter comma-separated patterns to exclude"
@@ -207,7 +209,7 @@ class AntiPatternToolWindowFactory : ToolWindowFactory, DumbAware {
         panel.add(exclusionsField, gbc)
 
         gbc.gridy++
-        panel.add(JLabel("Snapshot CSV File Path:"), gbc)
+        panel.add(JLabel("[Optional] Snapshot CSV File Path:"), gbc)
         gbc.gridy++
         snapshotCsvFilePathField = JTextField().apply {
             toolTipText = "Enter the path to the snapshot CSV file"
@@ -218,7 +220,7 @@ class AntiPatternToolWindowFactory : ToolWindowFactory, DumbAware {
         panel.add(snapshotCsvFilePathField, gbc)
 
         gbc.gridy++
-        panel.add(JLabel("Method Execution Threshold (ms):"), gbc)
+        panel.add(JLabel("[Optional] Method Execution Threshold (ms):"), gbc)
         gbc.gridy++
         methodExecutionThresholdField = JTextField("2000").apply {
             toolTipText = "Set the execution time threshold for methods (default: 2000ms)"
@@ -246,13 +248,6 @@ class AntiPatternToolWindowFactory : ToolWindowFactory, DumbAware {
         }
     }
 
-    private fun addRunButton(panel: JPanel, gbc: GridBagConstraints) {
-        gbc.gridy++
-        gbc.gridwidth = 2
-        gbc.weightx = 0.0
-        panel.add(createRunButton(), gbc)
-    }
-
     private fun createRunButton(): JButton {
         val iconUrl = javaClass.getResource("/icons/play-button-green-icon.png")
         val icon = ImageIcon(ImageIcon(iconUrl).image.getScaledInstance(20, 20, Image.SCALE_SMOOTH))
@@ -266,20 +261,8 @@ class AntiPatternToolWindowFactory : ToolWindowFactory, DumbAware {
         }
     }
 
-    private fun addOutputArea(panel: JPanel, gbc: GridBagConstraints) {
-        gbc.gridx = 0
-        gbc.gridy++
-        gbc.gridwidth = 2
-        gbc.fill = GridBagConstraints.BOTH
-        gbc.weightx = 1.0
-        gbc.weighty = 1.0
-        panel.add(JBScrollPane(outputArea).apply {
-            border = JBUI.Borders.empty(10)
-        }, gbc)
-    }
-
     private fun runAnalysis() {
-        if (thirdPartyMethodPathField.text.isBlank() || thirdPartyMethodPathField.text == "e.g., /path/to/thirdparty/methods") {
+        if (thirdPartyMethodPathField.text.isBlank() || thirdPartyMethodPathField.text == thirdPartyPathPlaceholder) {
             thirdPartyMethodPathWarning.isVisible = true
             outputArea.text = "Error: Third Party Method Path is required."
             return
