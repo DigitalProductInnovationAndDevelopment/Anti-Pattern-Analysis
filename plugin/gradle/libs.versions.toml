@@ -12,6 +12,7 @@ kover = "0.8.1"
 [libraries]
 exampleLibrary = { group = "com.example", name = "exampleLibrary", version.ref = "exampleLibrary" }
 fifesoft = { group = "com.fifesoft", name = "rsyntaxtextarea", version = "3.2.0" }
+orgjson = { group = "org.json", name = "json", version = "20231013" }
 
 [plugins]
 changelog = { id = "org.jetbrains.changelog", version.ref = "changelog" }

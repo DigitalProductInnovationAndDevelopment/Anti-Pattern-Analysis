@@ -16,35 +16,46 @@ import tum.dpid.parser.ASTGenerator;
 import tum.dpid.parser.MethodExtractor;
 import tum.dpid.services.DynamicAnalyzer;
 
-import java.io.File;
 import java.io.IOException;
+import java.io.File;
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static tum.dpid.parser.MethodCollector.collectMethods;
 
 public class CallChainAnalyzer {
 
     public static void main(String[] args) {
-        ObjectMapper mapper = new ObjectMapper();
-        AnalyzerConfig config;
 
-        try {
-            config = mapper.readValue(new File("config.json"), AnalyzerConfig.class);
-        } catch (IOException e) {
-            System.out.println("Error reading config file:\n" + e.getMessage());
+        if (args.length < 1) {
+            System.out.println("Error: Config content not provided.");
             System.exit(1);
             return;
         }
 
+        String configContent = args[0];
+
+        System.out.println("CC: " + configContent);
+
+        ObjectMapper mapper = new ObjectMapper();
+        AnalyzerConfig config;
+
+        try {
+            config = mapper.readValue(configContent, AnalyzerConfig.class);
+        } catch (IOException e) {
+            System.out.println("Error parsing config content:\n" + e.getMessage());
+            System.exit(1);
+            return;
+        }
+
+
+
         String projectDirectoryPath = config.getProjectDirectory();
         File projectDirectory = new File(projectDirectoryPath);
+
+        System.out.println("PD: " + projectDirectoryPath);
 
         if (!projectDirectory.exists() || !projectDirectory.isDirectory()) {
             System.out.println("Invalid project directory path.");
@@ -120,14 +131,11 @@ public class CallChainAnalyzer {
                     if (hasAntiPattern) {
                         MethodDeclarationWrapper method = methodMap.get(entryMethod.getName());
                         String methodSignatureToCheck = method.getDeclaringClass() + "." + entryMethod.getName() + " ()";
-                        //System.out.println("AntiPattern Entry point "+ methodSignatureToCheck);
-
                         System.out.println("Call chain starting with method " + entryMethod.getName() + " at position " + method.getLineNumber() + ":" + method.getColumnNumber() + " in file: " + method.getDeclaringClass() + " has a loop anti pattern!");
                         AnalysisOutput analysisOutput = new AnalysisOutput(entryMethod.getName() , method.getDeclaringClass(), method.getLineNumber(), method.getColumnNumber(), dynamicAnalyzer.getFunctionAvgTime(methodSignatureToCheck), AnalysisOutput.AnalysisType.STATIC, AnalysisOutput.Severity.LOW);
 
                         boolean foundAntiPatternInDynamicAnalysis = dynamicAnalyzer.checkAntiPattern(methodSignatureToCheck, config.getMethodExecutionThresholdMs());
                         if (foundAntiPatternInDynamicAnalysis){
-                            //analysisOutput.setExecutionTime(dynamicAnalyzer.getFunctionAvgTime(methodSignatureToCheck));
                             analysisOutput.setAnalysisType(AnalysisOutput.AnalysisType.BOTH);
                             analysisOutput.setSeverity(AnalysisOutput.Severity.HIGH);
                         }
