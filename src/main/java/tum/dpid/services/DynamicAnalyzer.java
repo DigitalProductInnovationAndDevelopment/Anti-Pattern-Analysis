@@ -20,6 +20,10 @@ public class DynamicAnalyzer {
         this.csvFilePath = csvFilePath;
     }
 
+    /**
+     * Process sampling data from and create map of method execution details
+     * @throws IOException if not valid csv file
+     */
     public void processSamplingData() throws IOException {
 
         try (CSVReader csvReader = new CSVReader(new FileReader(this.csvFilePath))) {
@@ -82,17 +86,21 @@ public class DynamicAnalyzer {
         return methodDetailsMap.get(methodSignature).stream().anyMatch(m -> m.getTotalTime() >= threshold);
     }
 
+    /**
+     *
+     * @param methodSignature package name + method name
+     * @param threshold threshold in ms
+     * @return find and return severity level of Antipattern
+     */
     public int findAntiPatternSeverity(String methodSignature, Integer threshold){
         if (!methodDetailsMap.containsKey(methodSignature))
             return -1;
 
         List<MethodExecutionDetails> methodExecutionDetailsList = methodDetailsMap.get(methodSignature);
-        int exceedingThresholdCount = 0;
-        for (MethodExecutionDetails details: methodExecutionDetailsList) {
-            if (details.getTotalTime() >= threshold){
-                exceedingThresholdCount++;
-            }
-        }
+        int exceedingThresholdCount = (int) methodExecutionDetailsList.stream()
+                .filter(d -> d.getTotalTime() >= threshold)
+                .count();
+
         if (exceedingThresholdCount >= methodExecutionDetailsList.size() / 2) {
             return 2;
         }
