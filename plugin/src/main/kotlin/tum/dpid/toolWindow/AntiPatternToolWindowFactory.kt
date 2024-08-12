@@ -80,6 +80,7 @@ class AntiPatternToolWindowFactory : ToolWindowFactory, DumbAware {
         addInfoLabel(mainPanel, gbc)
 
         gbc.gridy++
+        gbc.gridy++
         val configPanel = createCollapsibleConfigPanel()
         mainPanel.add(createCollapsiblePanel("Configuration", configPanel), gbc)
 
@@ -160,17 +161,25 @@ class AntiPatternToolWindowFactory : ToolWindowFactory, DumbAware {
         gbc.gridy = 1
         gbc.gridwidth = 2
         gbc.weightx = 1.0
-        panel.add(
-            JLabel(
-                "<html><p>This plugin provides tools for identifying and addressing anti-patterns in Java code bases. Enhance your code's reliability with automated analysis and actionable insights.</p>" +
-                        "<p><strong>Key Features:</strong></p>" +
-                        "<ul><li>Detects deadlocks and performance issues with static and dynamic code analysis.</li>" +
-                        "<li>Improves maintainability, scalability, and software quality.</li></ul>" +
-                        "<strong>Detectable Anti-patterns:</strong>" +
-                        "<ul><li><strong>For Loop Database Anti-Performance:</strong> Identifies inefficient database access patterns within loops that can lead to performance bottlenecks.</li></ul>"
-            ), gbc
-        )
+        gbc.fill = GridBagConstraints.HORIZONTAL  // Ensure the label uses the full width
+
+
+        val infoLabel = JLabel(
+            "<html><div style='width:100%'>" +
+                    "<p>This plugin provides tools for identifying and addressing anti-patterns in Java code bases. Enhance your code's reliability with automated analysis and actionable insights.</p>" +
+                    "<p><strong>Key Features:</strong></p>" +
+                    "<ul><li>Detects deadlocks and performance issues with static and dynamic code analysis.</li>" +
+                    "<li>Improves maintainability, scalability, and software quality.</li></ul>" +
+                    "<strong>Detectable Anti-patterns:</strong>" +
+                    "<ul><li><strong>For Loop Database Anti-Performance:</strong> Identifies inefficient database access patterns within loops that can lead to performance bottlenecks.</li></ul>" +
+                    "</div></html>"
+        ).apply {
+            preferredSize = Dimension(400, 185)  // Allows the label to dynamically adjust size
+        }
+
+        panel.add(infoLabel, gbc)
     }
+
 
     private fun addConfigFields(panel: JPanel, gbc: GridBagConstraints) {
         gbc.gridx = 0
