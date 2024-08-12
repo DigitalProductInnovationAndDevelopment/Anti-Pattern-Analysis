@@ -1,6 +1,7 @@
 package tum.dpid.model.resources;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class AnalysisOutput {
@@ -105,18 +106,39 @@ public class AnalysisOutput {
         this.invokedSubMethodDetails = invokedSubMethodDetails;
     }
 
-    //Todo severity level arrangement
+
     /**
-     * If found in both dynamic and static analysis: HIGH
-     * If only found in static analysis: LOW
+     * If method execution time exceeds threshold more than or equal to half of executions: HIGH
+     * If method execution time exceeds threshold less than  half of executions and more than once: MEDIUM
+     * If method execution time does not exceed but found anti-pattern in static analysis: LOW
+     * If method does not execute during sampling or does not exist: NONE
      */
     public enum Severity {
-        HIGH,
-        MEDIUM,
-        LOW,
-        NONE
-    }
+        HIGH(2),
+        MEDIUM(1),
+        LOW(0),
+        NONE(-1);
 
+        private final int level;
+
+        Severity(int level) {
+            this.level = level;
+        }
+        public static Severity fromIntValue(int level) {
+            return Arrays.stream(Severity.values())
+                    .filter(s -> s.level == level)
+                    .findFirst()
+                    .orElse(Severity.NONE);
+        }
+        public int getLevel() {
+            return level;
+        }
+    }
+    /**
+     * If method found  in static analysis and does not exceed certain threshold: STATIC
+     * If method only exists in dynamic analysis: DYNAMIC
+     * If method found in both of analysis: BOTH
+     */
     public enum AnalysisType {
         STATIC,
         DYNAMIC,
