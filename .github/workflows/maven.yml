@@ -48,3 +48,5 @@ jobs:
         asset_path: target/anti-pattern-detector-1.0.jar
         asset_name: anti-pattern-detector-1.0.jar
         asset_content_type: application/java-archive
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
