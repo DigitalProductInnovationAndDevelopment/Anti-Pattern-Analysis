@@ -13,8 +13,7 @@ jobs:
       pull-requests: write
       repository-projects: write
       packages: write
-    
-
+  
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
