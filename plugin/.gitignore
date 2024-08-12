@@ -36,6 +36,7 @@ gradle-app.setting
 
 # Package Files #
 *.jar
+!anti-pattern-detector-*.jar
 *.war
 *.nar
 *.ear
