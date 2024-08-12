@@ -72,13 +72,35 @@ public class DynamicAnalyzer {
     /**
      *
      * @param methodSignature package name + method name
-     * @return if statically found antipattern exceed certain threshold
+     * @param threshold threshold in ms
+     * @return if statically found antipattern exceed certain threshold in dynamic analysis, return true
      */
-    public boolean checkAntiPattern(String methodSignature){
-        return methodDetailsMap.containsKey(methodSignature);
+    public boolean checkAntiPattern(String methodSignature, Integer threshold){
+        if (!methodDetailsMap.containsKey(methodSignature))
+            return false;
+
+        return methodDetailsMap.get(methodSignature).stream().anyMatch(m -> m.getTotalTime() >= threshold);
     }
 
+    public int findAntiPatternSeverity(String methodSignature, Integer threshold){
+        if (!methodDetailsMap.containsKey(methodSignature))
+            return -1;
 
+        List<MethodExecutionDetails> methodExecutionDetailsList = methodDetailsMap.get(methodSignature);
+        int exceedingThresholdCount = 0;
+        for (MethodExecutionDetails details: methodExecutionDetailsList) {
+            if (details.getTotalTime() >= threshold){
+                exceedingThresholdCount++;
+            }
+        }
+        if (exceedingThresholdCount >= methodExecutionDetailsList.size() / 2) {
+            return 2;
+        }
+        else if (exceedingThresholdCount > 0 && exceedingThresholdCount < methodExecutionDetailsList.size() / 2) {
+            return 1;
+        }
+        return exceedingThresholdCount;
+    }
     /**
      *
      * @param methodSignature package name + method name

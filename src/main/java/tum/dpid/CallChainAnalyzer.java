@@ -145,11 +145,12 @@ public class CallChainAnalyzer {
                         AnalysisOutput analysisOutput = new AnalysisOutput(entryMethod.getName(), method.getDeclaringClass(), method.getLineNumber(), method.getColumnNumber(), dynamicAnalyzer != null ? dynamicAnalyzer.getFunctionAvgTime(methodSignatureToCheck) : 0.0, AnalysisOutput.AnalysisType.STATIC, AnalysisOutput.Severity.LOW);
 
                         if (dynamicAnalyzer != null) {
-                            boolean foundAntiPatternInDynamicAnalysis = dynamicAnalyzer.checkAntiPattern(methodSignatureToCheck);
+                            boolean foundAntiPatternInDynamicAnalysis = dynamicAnalyzer.checkAntiPattern(methodSignatureToCheck, config.getMethodExecutionThresholdMs());
                             if (foundAntiPatternInDynamicAnalysis){
+                                int severityLevel = dynamicAnalyzer.findAntiPatternSeverity(methodSignatureToCheck, config.getMethodExecutionThresholdMs());
                                 analysisOutput.setExecutionTime(dynamicAnalyzer.getFunctionAvgTime(methodSignatureToCheck));
                                 analysisOutput.setAnalysisType(AnalysisOutput.AnalysisType.BOTH);
-                                analysisOutput.setSeverity(AnalysisOutput.Severity.HIGH);
+                                analysisOutput.setSeverity(AnalysisOutput.Severity.fromIntValue(severityLevel));
                             }
                         }
                         List<InvokedSubMethod> invokedSubMethodArrayList = new ArrayList<>();

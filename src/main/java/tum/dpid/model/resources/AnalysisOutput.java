@@ -1,6 +1,7 @@
 package tum.dpid.model.resources;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class AnalysisOutput {
@@ -111,10 +112,25 @@ public class AnalysisOutput {
      * If only found in static analysis: LOW
      */
     public enum Severity {
-        HIGH,
-        MEDIUM,
-        LOW,
-        NONE
+        HIGH(2),
+        MEDIUM(1),
+        LOW(0),
+        NONE(-1);
+
+        private final int level;
+
+        Severity(int level) {
+            this.level = level;
+        }
+        public static Severity fromIntValue(int level) {
+            return Arrays.stream(Severity.values())
+                    .filter(s -> s.level == level)
+                    .findFirst()
+                    .orElse(Severity.NONE);
+        }
+        public int getLevel() {
+            return level;
+        }
     }
 
     public enum AnalysisType {
