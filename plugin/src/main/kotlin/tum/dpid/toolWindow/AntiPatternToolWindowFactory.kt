@@ -162,9 +162,12 @@ class AntiPatternToolWindowFactory : ToolWindowFactory, DumbAware {
         gbc.weightx = 1.0
         panel.add(
             JLabel(
-                "<html><p>This plugin detects various anti-patterns in your Java code.</p>" +
-                        "<p><strong>Detectable Anti-patterns:</strong></p>" +
-                        "<ul><li>For Loop Database Anti-Performance</li></ul></html>"
+                "<html><p>This plugin provides tools for identifying and addressing anti-patterns in Java code bases. Enhance your code's reliability with automated analysis and actionable insights.</p>" +
+                        "<p><strong>Key Features:</strong></p>" +
+                        "<ul><li>Detects deadlocks and performance issues with static and dynamic code analysis.</li>" +
+                        "<li>Improves maintainability, scalability, and software quality.</li></ul>" +
+                        "<strong>Detectable Anti-patterns:</strong>" +
+                        "<ul><li><strong>For Loop Database Anti-Performance:</strong> Identifies inefficient database access patterns within loops that can lead to performance bottlenecks.</li></ul>"
             ), gbc
         )
     }
@@ -307,7 +310,8 @@ class AntiPatternToolWindowFactory : ToolWindowFactory, DumbAware {
         val threshold = methodExecutionThresholdField.text.toIntOrNull() ?: 2000
         val config = mapOf(
             "projectDirectory" to projectDirectoryField.text,
-            "thirdPartyMethodPaths" to thirdPartyMethodPathField.text.split(",").map { it.trim() }.filter { it.isNotEmpty() },
+            "thirdPartyMethodPaths" to thirdPartyMethodPathField.text.split(",").map { it.trim() }
+                .filter { it.isNotEmpty() },
             "exclusions" to exclusionsField.text.split(",").map { it.trim() }.filter { it.isNotEmpty() },
             "snapshotCsvFilePath" to snapshotCsvFilePathField.text,
             "methodExecutionThresholdMs" to threshold
