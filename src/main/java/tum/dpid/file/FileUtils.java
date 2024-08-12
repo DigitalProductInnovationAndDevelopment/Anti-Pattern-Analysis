@@ -31,4 +31,21 @@ public class FileUtils {
 
         return javaFiles;
     }
+
+    public static boolean checkIfValidCsvFile(Path filePath){
+        String fileName = filePath.getFileName().toString().toLowerCase();
+        if (!Files.exists(filePath)) {
+            return false;
+        }
+        if (!fileName.endsWith(".csv")) {
+            return false;
+        }
+        try {
+            String contentType = Files.probeContentType(filePath);
+            //System.out.println("ContentType: " + contentType);
+            return "text/csv".equals(contentType);
+        } catch (IOException e) {
+            return false;
+        }
+    }
 }

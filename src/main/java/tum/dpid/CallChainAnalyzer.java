@@ -18,7 +18,6 @@ import tum.dpid.services.DynamicAnalyzer;
 
 import java.io.IOException;
 import java.io.File;
-import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -27,7 +26,7 @@ import static tum.dpid.parser.MethodCollector.collectMethods;
 
 public class CallChainAnalyzer {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
 
         if (args.length < 1) {
             System.out.println("Error: Config content not provided.");
@@ -74,16 +73,27 @@ public class CallChainAnalyzer {
                     DB_METHODS.addAll(MethodExtractor.extractMethodNames(projectDirectory, parser, javaFile));
                 }
             } catch (IOException e) {
-                e.printStackTrace();
+                throw new IOException(e.getMessage(), e);
             }
         }
+
+        DynamicAnalyzer dynamicAnalyzer;
+        if (config.getSnapshotCsvFilePath() != null && !config.getSnapshotCsvFilePath().isEmpty() && FileUtils.checkIfValidCsvFile(new File(config.getSnapshotCsvFilePath()).toPath().toAbsolutePath())) {
+            System.out.println("CSV file path is: " + config.getSnapshotCsvFilePath() + "\n");
+            dynamicAnalyzer = new DynamicAnalyzer(config.getSnapshotCsvFilePath());
+            dynamicAnalyzer.processSamplingData();
+        }
+        else {
+            dynamicAnalyzer = null;
+            System.out.println("No valid snapshot csv file provided. Skipping dynamic analysis. \n");
+        }
+
 
         try {
             Map<String, MethodDeclarationWrapper> methodMap = collectMethods(projectDirectory, parser, config.getExclusions());
             Map<String, List<String>> callGraph = CallGraph.buildCallGraph(methodMap);
 
             Set<CallChainEntity> allEntryPointsWithAntiPattern = new HashSet<>();
-            DynamicAnalyzer dynamicAnalyzer = new DynamicAnalyzer(config.getSnapshotCsvFilePath());
             List<AnalysisOutput> analysisOutputList = new ArrayList<>();
 
             for (String targetMethod : DB_METHODS) {
@@ -132,19 +142,21 @@ public class CallChainAnalyzer {
                         MethodDeclarationWrapper method = methodMap.get(entryMethod.getName());
                         String methodSignatureToCheck = method.getDeclaringClass() + "." + entryMethod.getName() + " ()";
                         System.out.println("Call chain starting with method " + entryMethod.getName() + " at position " + method.getLineNumber() + ":" + method.getColumnNumber() + " in file: " + method.getDeclaringClass() + " has a loop anti pattern!");
-                        AnalysisOutput analysisOutput = new AnalysisOutput(entryMethod.getName() , method.getDeclaringClass(), method.getLineNumber(), method.getColumnNumber(), dynamicAnalyzer.getFunctionAvgTime(methodSignatureToCheck), AnalysisOutput.AnalysisType.STATIC, AnalysisOutput.Severity.LOW);
+                        AnalysisOutput analysisOutput = new AnalysisOutput(entryMethod.getName(), method.getDeclaringClass(), method.getLineNumber(), method.getColumnNumber(), dynamicAnalyzer != null ? dynamicAnalyzer.getFunctionAvgTime(methodSignatureToCheck) : 0.0, AnalysisOutput.AnalysisType.STATIC, AnalysisOutput.Severity.LOW);
 
-                        boolean foundAntiPatternInDynamicAnalysis = dynamicAnalyzer.checkAntiPattern(methodSignatureToCheck, config.getMethodExecutionThresholdMs());
-                        if (foundAntiPatternInDynamicAnalysis){
-                            analysisOutput.setAnalysisType(AnalysisOutput.AnalysisType.BOTH);
-                            analysisOutput.setSeverity(AnalysisOutput.Severity.HIGH);
+                        if (dynamicAnalyzer != null) {
+                            boolean foundAntiPatternInDynamicAnalysis = dynamicAnalyzer.checkAntiPattern(methodSignatureToCheck);
+                            if (foundAntiPatternInDynamicAnalysis){
+                                analysisOutput.setExecutionTime(dynamicAnalyzer.getFunctionAvgTime(methodSignatureToCheck));
+                                analysisOutput.setAnalysisType(AnalysisOutput.AnalysisType.BOTH);
+                                analysisOutput.setSeverity(AnalysisOutput.Severity.HIGH);
+                            }
                         }
-
                         List<InvokedSubMethod> invokedSubMethodArrayList = new ArrayList<>();
                         entitiesWithLoops.forEach(entity -> {
                             MethodDeclarationWrapper entityMethod = methodMap.get(entity.getName());
                             System.out.println("\tMethod " + entity.getName() + " at position " + entityMethod.getLineNumber() + ":" + entityMethod.getColumnNumber() + " in file: " + entityMethod.getDeclaringClass() + " invokes method: " + entity.getInvokedMethod() + " in a LOOP!");
-                            InvokedSubMethod invokedSubMethod = new InvokedSubMethod(entity.getName() , entityMethod.getDeclaringClass() , entityMethod.getLineNumber(), entityMethod.getColumnNumber() ,entity.getInvokedMethod());
+                            InvokedSubMethod invokedSubMethod = new InvokedSubMethod(entity.getName(), entityMethod.getDeclaringClass(), entityMethod.getLineNumber(), entityMethod.getColumnNumber(), entity.getInvokedMethod());
                             invokedSubMethodArrayList.add(invokedSubMethod);
                         });
                         analysisOutput.setInvokedSubMethodDetails(invokedSubMethodArrayList);
@@ -161,10 +173,10 @@ public class CallChainAnalyzer {
                 mapper.writeValue(outputFile, analysisOutputList);
                 System.out.println("Analysis output is available at: " + outputFile.getAbsolutePath());
             } catch (IOException e) {
-                e.printStackTrace();
+                throw new IOException(e.getMessage(), e);
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new IOException(e.getMessage(), e);
         }
     }
 }

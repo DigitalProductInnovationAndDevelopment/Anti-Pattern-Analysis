@@ -9,11 +9,20 @@ import java.util.*;
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvValidationException;
 public class DynamicAnalyzer {
+
+    private String csvFilePath;
+
     private final Map<String, List<MethodExecutionDetails>> methodDetailsMap = new HashMap<>();
 
-    public DynamicAnalyzer(String csvFilePath) throws IOException {
+    public DynamicAnalyzer() {}
 
-        try (CSVReader csvReader = new CSVReader(new FileReader(csvFilePath))) {
+    public DynamicAnalyzer(String csvFilePath) {
+        this.csvFilePath = csvFilePath;
+    }
+
+    public void processSamplingData() throws IOException {
+
+        try (CSVReader csvReader = new CSVReader(new FileReader(this.csvFilePath))) {
             boolean firstLine = true;
             String [] values;
             while ((values = csvReader.readNext()) != null) {
@@ -42,7 +51,7 @@ public class DynamicAnalyzer {
                 methodDetailsMap.computeIfAbsent(name, k -> new ArrayList<>()).add(methodExecutionDetails);
             }
         } catch (IOException e) {
-            e.printStackTrace();
+           throw new IOException(e);
         } catch (CsvValidationException e) {
             throw new RuntimeException(e);
         }
@@ -63,21 +72,12 @@ public class DynamicAnalyzer {
     /**
      *
      * @param methodSignature package name + method name
-     * @param threshold in ms from config
      * @return if statically found antipattern exceed certain threshold
      */
-    public boolean checkAntiPattern(String methodSignature, Integer threshold){
-        if (!methodDetailsMap.containsKey(methodSignature))
-            return false;
-
-        List<MethodExecutionDetails> methodExecutionDetailsList = methodDetailsMap.get(methodSignature);
-        for (MethodExecutionDetails details: methodExecutionDetailsList) {
-            if (details.getTotalTime() >= threshold){
-                return true;
-            }
-        }
-        return false;
+    public boolean checkAntiPattern(String methodSignature){
+        return methodDetailsMap.containsKey(methodSignature);
     }
+
 
     /**
      *
@@ -85,7 +85,7 @@ public class DynamicAnalyzer {
      * @return average total execution time of method. If it is not executed during sampling, returns 0.0
      */
     public Double getFunctionAvgTime(String methodSignature){
-        if (!methodDetailsMap.containsKey(methodSignature))
+        if (!methodDetailsMap.containsKey(methodSignature) || methodDetailsMap.get(methodSignature).isEmpty() || methodDetailsMap.isEmpty())
             return 0.0;
 
         OptionalDouble avgTime = methodDetailsMap.get(methodSignature).stream()
@@ -94,4 +94,11 @@ public class DynamicAnalyzer {
         return avgTime.isPresent() ? avgTime.getAsDouble() : 0.0;
     }
 
+    public String getCsvFilePath() {
+        return csvFilePath;
+    }
+
+    public void setCsvFilePath(String csvFilePath) {
+        this.csvFilePath = csvFilePath;
+    }
 }
