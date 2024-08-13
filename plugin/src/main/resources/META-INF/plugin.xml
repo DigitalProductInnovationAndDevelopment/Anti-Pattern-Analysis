@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin url="https://example.com">
 
     <id>tum.dpid.antipatternanalysis.plugin</id>
     <name>Anti-Pattern Analysis</name>
