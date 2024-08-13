@@ -1,4 +1,5 @@
 @startuml
+skinparam backgroundcolor transparent
 
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
 !define DEVICONS https://raw.githubusercontent.com/tupadr3/plantuml-icon-font-sprites/master/devicons
@@ -12,6 +13,10 @@
 !include FONTAWESOME/users.puml
 !include FONTAWESOME/chart_line.puml
 LAYOUT_WITH_LEGEND()
+LAYOUT_LANDSCAPE()
+
+
+
 
 title System Diagram for Anti-Pattern Analysis
 
