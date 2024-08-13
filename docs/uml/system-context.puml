@@ -1,0 +1,34 @@
+@startuml
+
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+!define DEVICONS https://raw.githubusercontent.com/tupadr3/plantuml-icon-font-sprites/master/devicons
+
+!$ICONURL = "https://raw.githubusercontent.com/tupadr3/plantuml-icon-font-sprites/v3.0.0/icons"
+!include $ICONURL/common.puml
+!include $ICONURL/devicons2/kotlin.puml
+
+!define FONTAWESOME https://raw.githubusercontent.com/tupadr3/plantuml-icon-font-sprites/master/font-awesome-5
+!include DEVICONS/java.puml
+!include FONTAWESOME/users.puml
+!include FONTAWESOME/chart_line.puml
+LAYOUT_WITH_LEGEND()
+
+title System Context Diagram for Anti-Pattern Analysis
+
+Person(developer, "Developer", "A developer who wants to identify and analyze anti-patterns in Java projects.")
+
+System_Boundary(antiPatternDetector, "Anti-Pattern Detector") {
+    Container(plugin, "IntelliJ IDEA Plugin", "Kotlin", "A plugin that enables developers to configure and execute anti-pattern analysis directly from the IDE.", $sprite="kotlin")
+    Container(staticAnalyzer, "Static Analyzer", "Java", "Analyzes source code, generates an Abstract Syntax Tree (AST), and performs static analysis to detect potential anti-patterns.", $sprite="java")
+    Container(dynamicAnalyzer, "Dynamic Analyzer", "Java", "Validates static analysis results by reducing false positives through sampling data and integrates dynamic analysis results.", $sprite="java")
+}
+
+Rel(developer, plugin, "Configures and initiates analysis")
+Rel_Back(developer, plugin, "Receives and reviews analysis reports")
+
+Rel_Neighbor(plugin, staticAnalyzer, "Triggers static analysis", "Jar")
+Rel(staticAnalyzer, dynamicAnalyzer, "Forwards static analysis results")
+Rel(dynamicAnalyzer, plugin, "Returns the combined analysis report")
+
+SHOW_LEGEND()
+@enduml
