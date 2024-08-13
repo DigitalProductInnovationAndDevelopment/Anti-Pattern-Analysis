@@ -13,13 +13,13 @@
 !include FONTAWESOME/chart_line.puml
 LAYOUT_WITH_LEGEND()
 
-title System Context Diagram for Anti-Pattern Analysis
+title System Diagram for Anti-Pattern Analysis
 
 Person(developer, "Developer", "A developer who wants to identify and analyze anti-patterns in Java projects.")
 
 System_Boundary(antiPatternDetector, "Anti-Pattern Detector") {
     Container(plugin, "IntelliJ IDEA Plugin", "Kotlin", "A plugin that enables developers to configure and execute anti-pattern analysis directly from the IDE.", $sprite="kotlin")
-    Container(staticAnalyzer, "Static Analyzer", "Java", "Analyzes source code, generates an Abstract Syntax Tree (AST), and performs static analysis to detect potential anti-patterns.", $sprite="java")
+    Container(staticAnalyzer, "Static Analyzer", "Java", "Analyzes source code and generates an ASTs and call graphs by utilizing Eclipse JDT library. Then performs static analysis to detect potential anti-patterns.", $sprite="java")
     Container(dynamicAnalyzer, "Dynamic Analyzer", "Java", "Validates static analysis results by reducing false positives through sampling data and integrates dynamic analysis results.", $sprite="java")
 }
 
