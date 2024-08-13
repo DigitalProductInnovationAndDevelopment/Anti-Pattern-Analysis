@@ -274,7 +274,8 @@ class AntiPatternToolWindowFactory : ToolWindowFactory, DumbAware {
     }
 
     private fun runAnalysis() {
-        val thirdPartyPath = if (thirdPartyMethodPathField.text == "e.g., /path/to/thirdparty/methods") "" else thirdPartyMethodPathField.text
+        val thirdPartyPath =
+            if (thirdPartyMethodPathField.text == "e.g., /path/to/thirdparty/methods") "" else thirdPartyMethodPathField.text
         val projectDir = projectDirectoryField.text
 
         if (thirdPartyPath.isBlank()) {
@@ -321,14 +322,22 @@ class AntiPatternToolWindowFactory : ToolWindowFactory, DumbAware {
     private fun createConfigContent(): String {
         val threshold = methodExecutionThresholdField.text.toIntOrNull() ?: 2000
 
-        val projectDir = if (projectDirectoryField.text == "e.g., /path/to/your/project") "" else projectDirectoryField.text
-        val thirdPartyPaths = if (thirdPartyMethodPathField.text == "e.g., /path/to/thirdparty/methods") emptyList() else thirdPartyMethodPathField.text.split(",").map { it.trim() }.filter { it.isNotEmpty() }
-        val exclusions = if (exclusionsField.text == "e.g., com.example.*, org.test.*") emptyList() else exclusionsField.text.split(",").map { it.trim() }.filter { it.isNotEmpty() }
-        val snapshotCsvFilePath = if (snapshotCsvFilePathField.text == "e.g., /path/to/snapshot.csv") "" else snapshotCsvFilePathField.text
+        val projectDir =
+            if (projectDirectoryField.text == "e.g., /path/to/your/project") "" else projectDirectoryField.text
+        val thirdPartyPaths =
+            if (thirdPartyMethodPathField.text == "e.g., /path/to/thirdparty/methods") emptyList() else thirdPartyMethodPathField.text.split(
+                ","
+            ).map { it.trim() }.filter { it.isNotEmpty() }
+        val exclusions =
+            if (exclusionsField.text == "e.g., com.example.*, org.test.*") emptyList() else exclusionsField.text.split(",")
+                .map { it.trim() }.filter { it.isNotEmpty() }
+        val snapshotCsvFilePath =
+            if (snapshotCsvFilePathField.text == "e.g., /path/to/snapshot.csv") "" else snapshotCsvFilePathField.text
 
         val config = mapOf(
             "projectDirectory" to projectDirectoryField.text,
-            "thirdPartyMethodPaths" to thirdPartyMethodPathField.text.split(",").map { it.trim() }.filter { it.isNotEmpty() },
+            "thirdPartyMethodPaths" to thirdPartyMethodPathField.text.split(",").map { it.trim() }
+                .filter { it.isNotEmpty() },
             "exclusions" to exclusionsField.text.split(",").map { it.trim() }.filter { it.isNotEmpty() },
             "snapshotCsvFilePath" to snapshotCsvFilePathField.text,
             "projectDirectory" to projectDir,
