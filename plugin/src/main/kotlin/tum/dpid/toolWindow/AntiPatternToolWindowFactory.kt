@@ -202,7 +202,7 @@ class AntiPatternToolWindowFactory : ToolWindowFactory, DumbAware {
             toolTipText = "Enter comma-separated patterns to exclude"
             text = "e.g., com.example.*, org.test.*"  // Placeholder text
             foreground = JBColor.GRAY
-            addFocusListener(PlaceholderFocusListener(this, "e.g., com.example.*, org.test.*"))
+            addFocusListener(PlaceholderFocusListener(this, "e.g., com.example.*, org.test.*#ClassName"))
         }
         panel.add(exclusionsField, gbc)
 
@@ -279,7 +279,10 @@ class AntiPatternToolWindowFactory : ToolWindowFactory, DumbAware {
     }
 
     private fun runAnalysis() {
-        if (thirdPartyMethodPathField.text.isBlank() || thirdPartyMethodPathField.text == "e.g., /path/to/thirdparty/methods") {
+        val thirdPartyPath = if (thirdPartyMethodPathField.text == "e.g., /path/to/thirdparty/methods") "" else thirdPartyMethodPathField.text
+        val projectDir = projectDirectoryField.text
+
+        if (thirdPartyPath.isBlank()) {
             thirdPartyMethodPathWarning.isVisible = true
             outputArea.text = "Error: Third Party Method Path is required."
             return
@@ -287,7 +290,7 @@ class AntiPatternToolWindowFactory : ToolWindowFactory, DumbAware {
             thirdPartyMethodPathWarning.isVisible = false
         }
 
-        if (projectDirectoryField.text.isBlank()) {
+        if (projectDir.isBlank()) {
             projectPathWarning.isVisible = true
             outputArea.text = "Error: Project Path is required."
             return
@@ -322,11 +325,17 @@ class AntiPatternToolWindowFactory : ToolWindowFactory, DumbAware {
 
     private fun createConfigContent(): String {
         val threshold = methodExecutionThresholdField.text.toIntOrNull() ?: 2000
+
+        val projectDir = if (projectDirectoryField.text == "e.g., /path/to/your/project") "" else projectDirectoryField.text
+        val thirdPartyPaths = if (thirdPartyMethodPathField.text == "e.g., /path/to/thirdparty/methods") emptyList() else thirdPartyMethodPathField.text.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+        val exclusions = if (exclusionsField.text == "e.g., com.example.*, org.test.*") emptyList() else exclusionsField.text.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+        val snapshotCsvFilePath = if (snapshotCsvFilePathField.text == "e.g., /path/to/snapshot.csv") "" else snapshotCsvFilePathField.text
+
         val config = mapOf(
-            "projectDirectory" to projectDirectoryField.text,
-            "thirdPartyMethodPaths" to thirdPartyMethodPathField.text.split(",").map { it.trim() }.filter { it.isNotEmpty() },
-            "exclusions" to exclusionsField.text.split(",").map { it.trim() }.filter { it.isNotEmpty() },
-            "snapshotCsvFilePath" to snapshotCsvFilePathField.text,
+            "projectDirectory" to projectDir,
+            "thirdPartyMethodPaths" to thirdPartyPaths,
+            "exclusions" to exclusions,
+            "snapshotCsvFilePath" to snapshotCsvFilePath,
             "methodExecutionThresholdMs" to threshold
         )
         return ObjectMapper().writeValueAsString(config)
