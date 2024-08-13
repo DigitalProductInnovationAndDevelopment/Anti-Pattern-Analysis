@@ -77,6 +77,7 @@ class AntiPatternToolWindowFactory : ToolWindowFactory, DumbAware {
         addLogoAndTitle(mainPanel, gbc)
 
         gbc.gridy++
+        gbc.gridy++
         addInfoLabel(mainPanel, gbc)
 
         gbc.gridy++
@@ -166,15 +167,15 @@ class AntiPatternToolWindowFactory : ToolWindowFactory, DumbAware {
 
         val infoLabel = JLabel(
             "<html><div style='width:100%'>" +
-                    "<p>This plugin provides tools for identifying and addressing anti-patterns in Java code bases. Enhance your code's reliability with automated analysis and actionable insights.</p>" +
+                    "<p>This plugin provides a tool for identifying and addressing anti-patterns in Java code bases. Enhance your code's reliability with automated analysis and actionable insights.</p>" +
                     "<p><strong>Key Features:</strong></p>" +
                     "<ul><li>Detects deadlocks and performance issues with static and dynamic code analysis.</li>" +
                     "<li>Improves maintainability, scalability, and software quality.</li></ul>" +
-                    "<strong>Detectable Anti-patterns:</strong>" +
+                    "<strong>Detectable Anti-Patterns:</strong>" +
                     "<ul><li><strong>For Loop Database Anti-Performance:</strong> Identifies inefficient database access patterns within loops that can lead to performance bottlenecks.</li></ul>" +
                     "</div></html>"
         ).apply {
-            preferredSize = Dimension(400, 185)  // Allows the label to dynamically adjust size
+            preferredSize = Dimension(400, 240)  // Allows the label to dynamically adjust size
         }
 
         panel.add(infoLabel, gbc)
@@ -274,7 +275,8 @@ class AntiPatternToolWindowFactory : ToolWindowFactory, DumbAware {
     }
 
     private fun runAnalysis() {
-        val thirdPartyPath = if (thirdPartyMethodPathField.text == "e.g., /path/to/thirdparty/methods") "" else thirdPartyMethodPathField.text
+        val thirdPartyPath =
+            if (thirdPartyMethodPathField.text == "e.g., /path/to/thirdparty/methods") "" else thirdPartyMethodPathField.text
         val projectDir = projectDirectoryField.text
 
         if (thirdPartyPath.isBlank()) {
@@ -321,14 +323,22 @@ class AntiPatternToolWindowFactory : ToolWindowFactory, DumbAware {
     private fun createConfigContent(): String {
         val threshold = methodExecutionThresholdField.text.toIntOrNull() ?: 2000
 
-        val projectDir = if (projectDirectoryField.text == "e.g., /path/to/your/project") "" else projectDirectoryField.text
-        val thirdPartyPaths = if (thirdPartyMethodPathField.text == "e.g., /path/to/thirdparty/methods") emptyList() else thirdPartyMethodPathField.text.split(",").map { it.trim() }.filter { it.isNotEmpty() }
-        val exclusions = if (exclusionsField.text == "e.g., com.example.*, org.test.*") emptyList() else exclusionsField.text.split(",").map { it.trim() }.filter { it.isNotEmpty() }
-        val snapshotCsvFilePath = if (snapshotCsvFilePathField.text == "e.g., /path/to/snapshot.csv") "" else snapshotCsvFilePathField.text
+        val projectDir =
+            if (projectDirectoryField.text == "e.g., /path/to/your/project") "" else projectDirectoryField.text
+        val thirdPartyPaths =
+            if (thirdPartyMethodPathField.text == "e.g., /path/to/thirdparty/methods") emptyList() else thirdPartyMethodPathField.text.split(
+                ","
+            ).map { it.trim() }.filter { it.isNotEmpty() }
+        val exclusions =
+            if (exclusionsField.text == "e.g., com.example.*, org.test.*") emptyList() else exclusionsField.text.split(",")
+                .map { it.trim() }.filter { it.isNotEmpty() }
+        val snapshotCsvFilePath =
+            if (snapshotCsvFilePathField.text == "e.g., /path/to/snapshot.csv") "" else snapshotCsvFilePathField.text
 
         val config = mapOf(
             "projectDirectory" to projectDirectoryField.text,
-            "thirdPartyMethodPaths" to thirdPartyMethodPathField.text.split(",").map { it.trim() }.filter { it.isNotEmpty() },
+            "thirdPartyMethodPaths" to thirdPartyMethodPathField.text.split(",").map { it.trim() }
+                .filter { it.isNotEmpty() },
             "exclusions" to exclusionsField.text.split(",").map { it.trim() }.filter { it.isNotEmpty() },
             "snapshotCsvFilePath" to snapshotCsvFilePathField.text,
             "projectDirectory" to projectDir,
