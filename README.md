@@ -30,4 +30,5 @@ This project aims to provide tools and methodologies for identifying and address
    cd plugin
    ```
 5. [Follow the plugin installation steps](/plugin/README.md)
+
 6. Add the created plugin to your IDE following [IntelliJ documentation](https://www.jetbrains.com/help/idea/managing-plugins.html#install_plugin_from_disk)
