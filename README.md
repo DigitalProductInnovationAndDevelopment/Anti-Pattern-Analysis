@@ -7,3 +7,4 @@ Welcome to the Anti-Pattern Analysis in Code Bases project!
 <br>
 This project aims to provide tools and methodologies for identifying and addressing common anti-patterns in software development. By analyzing code bases, we aim to catch potential deadlocks, performance issues, and unnecessary code snippets that can impede maintainability, scalability, and overall software quality.
 
+---
