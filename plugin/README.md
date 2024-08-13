@@ -1,10 +1,40 @@
 <!-- Plugin description -->
-This plugin aims to provide tools and methodologies for identifying and addressing common anti-patterns in software
-development. By analyzing code bases, we aim to catch potential deadlocks, performance issues, and unnecessary code
-snippets that can impede maintainability, scalability, and overall software quality.
+
+## Anti-Pattern Detection Plugin
+
+This plugin provides a tool for identifying and addressing anti-patterns in Java code bases. Enhance your code's
+reliability with automated analysis and actionable insights.
+
+**Key Features:**
+
+- Detects deadlocks and performance issues with static and dynamic code analysis.
+- Improves maintainability, scalability, and software quality.
+
+**Detectable Anti-Patterns:**
+
+- **For Loop Database Anti-Performance:** Identifies inefficient database access patterns within loops that can lead to
+  performance bottlenecks.
+
+To run the plugin, open the plugin window by going to `View -> Tool Windows -> Anti-Pattern Detection` or by using the
+right sidebar, then fill the required configurations for your project and click on the `Run Analysis` button. The plugin
+will analyze the current project and display the results
+
+### Supported Languages
+
+Currently, the plugin supports the following languages:
+
+- Java and Kotlin (Note: Kotlin support is experimental)
+
+More languages will be supported in the future.
+
+### Privacy
+
+Your code is yours. This plugin does not collect any data from your code or send it to any external servers. Everything
+stays on your machine.
+
 <!-- Plugin description end -->
 
-## Installation
+### Building and Running the Plugin
 
 To build the plugin, run the following command:
 

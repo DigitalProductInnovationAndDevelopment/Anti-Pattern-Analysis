@@ -166,11 +166,11 @@ class AntiPatternToolWindowFactory : ToolWindowFactory, DumbAware {
 
         val infoLabel = JLabel(
             "<html><div style='width:100%'>" +
-                    "<p>This plugin provides tools for identifying and addressing anti-patterns in Java code bases. Enhance your code's reliability with automated analysis and actionable insights.</p>" +
+                    "<p>This plugin provides a tool for identifying and addressing anti-patterns in Java code bases. Enhance your code's reliability with automated analysis and actionable insights.</p>" +
                     "<p><strong>Key Features:</strong></p>" +
                     "<ul><li>Detects deadlocks and performance issues with static and dynamic code analysis.</li>" +
                     "<li>Improves maintainability, scalability, and software quality.</li></ul>" +
-                    "<strong>Detectable Anti-patterns:</strong>" +
+                    "<strong>Detectable Anti-Patterns:</strong>" +
                     "<ul><li><strong>For Loop Database Anti-Performance:</strong> Identifies inefficient database access patterns within loops that can lead to performance bottlenecks.</li></ul>" +
                     "</div></html>"
         ).apply {
