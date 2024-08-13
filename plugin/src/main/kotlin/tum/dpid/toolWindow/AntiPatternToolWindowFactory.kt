@@ -77,6 +77,7 @@ class AntiPatternToolWindowFactory : ToolWindowFactory, DumbAware {
         addLogoAndTitle(mainPanel, gbc)
 
         gbc.gridy++
+        gbc.gridy++
         addInfoLabel(mainPanel, gbc)
 
         gbc.gridy++
@@ -174,7 +175,7 @@ class AntiPatternToolWindowFactory : ToolWindowFactory, DumbAware {
                     "<ul><li><strong>For Loop Database Anti-Performance:</strong> Identifies inefficient database access patterns within loops that can lead to performance bottlenecks.</li></ul>" +
                     "</div></html>"
         ).apply {
-            preferredSize = Dimension(400, 185)  // Allows the label to dynamically adjust size
+            preferredSize = Dimension(400, 240)  // Allows the label to dynamically adjust size
         }
 
         panel.add(infoLabel, gbc)
