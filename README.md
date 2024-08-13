@@ -31,6 +31,7 @@ This project aims to provide tools and methodologies for identifying and address
 7. (Optional) Generate monitoring(or sampling) data for dynamic analysis [Sampling documentation](https://softwaredoug.com/blog/2023/10/15/visualvm-flamegraphs)
 
 8. Open the plugin tab and provide the config<br>
+   ### Configuration variables
    ```
    projectDirectory: Directory of the project to be analysed, retrieved automatically by the plugin
    ```
