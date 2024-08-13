@@ -1,14 +1,22 @@
 package tum.dpid.toolWindow
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.content.ContentFactory
+import com.intellij.util.io.readText
 import com.intellij.util.ui.JBUI
+import org.json.JSONArray
+import org.json.JSONObject
 import java.awt.*
+import java.awt.event.FocusAdapter
+import java.awt.event.FocusEvent
 import java.io.BufferedReader
 import java.io.IOException
 import java.io.InputStreamReader
@@ -16,14 +24,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import javax.swing.*
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.util.io.readText
-import org.json.JSONArray
-import org.json.JSONObject
-import java.awt.event.FocusAdapter
-import java.awt.event.FocusEvent
 
 class AntiPatternToolWindowFactory : ToolWindowFactory, DumbAware {
     companion object {
@@ -47,7 +47,6 @@ class AntiPatternToolWindowFactory : ToolWindowFactory, DumbAware {
     }
 
 
-
     private lateinit var projectDirectoryField: JTextField
     private lateinit var thirdPartyMethodPathField: JTextField
     private lateinit var exclusionsField: JTextField
@@ -65,23 +64,69 @@ class AntiPatternToolWindowFactory : ToolWindowFactory, DumbAware {
 
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
         this.project = project
-        val panel = JPanel(GridBagLayout())
+        val mainPanel = JPanel(GridBagLayout())
         val gbc = GridBagConstraints().apply {
             insets = JBUI.insets(10)
             fill = GridBagConstraints.HORIZONTAL
+            gridx = 0
+            weightx = 1.0
         }
 
-        addLogoAndTitle(panel, gbc)
-        addInfoLabel(panel, gbc)
-        addConfigFields(panel, gbc)
-        addRunButton(panel, gbc)
-        addOutputArea(panel, gbc)
+        addLogoAndTitle(mainPanel, gbc)
 
-        val content = ContentFactory.getInstance().createContent(panel, "", false)
+        gbc.gridy++
+        addInfoLabel(mainPanel, gbc)
+
+        gbc.gridy++
+        val configPanel = createCollapsibleConfigPanel()
+        mainPanel.add(createCollapsiblePanel("Configuration", configPanel), gbc)
+
+        gbc.gridy++
+        mainPanel.add(createRunButton(), gbc)
+
+        gbc.gridy++
+        gbc.weighty = 1.0
+        gbc.fill = GridBagConstraints.BOTH
+        mainPanel.add(JBScrollPane(outputArea).apply {
+            background = JBColor.BLACK
+        }, gbc)
+
+        val scrollPane = JBScrollPane(mainPanel)
+        val content = ContentFactory.getInstance().createContent(scrollPane, "", false)
         toolWindow.contentManager.addContent(content)
 
         // Automatically set the project directory field
         projectDirectoryField.text = project.basePath ?: ""
+    }
+
+    private fun createCollapsibleConfigPanel(): JPanel {
+        val configPanel = JPanel(GridBagLayout())
+        val gbc = GridBagConstraints().apply {
+            insets = JBUI.insets(5)
+            fill = GridBagConstraints.HORIZONTAL
+            gridx = 0
+            gridy = 0
+            weightx = 1.0
+        }
+
+        addConfigFields(configPanel, gbc)
+
+        return configPanel
+    }
+
+    private fun createCollapsiblePanel(title: String, content: JComponent): JPanel {
+        val panel = JPanel(BorderLayout())
+        val toggleButton = JButton(title).apply {
+            addActionListener {
+                content.isVisible = !content.isVisible
+                text = if (content.isVisible) "▼ $title" else "► $title"
+            }
+        }
+        panel.add(toggleButton, BorderLayout.NORTH)
+        panel.add(content, BorderLayout.CENTER)
+        content.isVisible = false
+        toggleButton.text = "► $title"
+        return panel
     }
 
     private fun addLogoAndTitle(panel: JPanel, gbc: GridBagConstraints) {
@@ -157,7 +202,7 @@ class AntiPatternToolWindowFactory : ToolWindowFactory, DumbAware {
             toolTipText = "Enter comma-separated patterns to exclude"
             text = "e.g., com.example.*, org.test.*"  // Placeholder text
             foreground = JBColor.GRAY
-            addFocusListener(PlaceholderFocusListener(this, "e.g., com.example.*, org.test.*"))
+            addFocusListener(PlaceholderFocusListener(this, "e.g., com.example.*, org.test.*#ClassName"))
         }
         panel.add(exclusionsField, gbc)
 
@@ -234,7 +279,10 @@ class AntiPatternToolWindowFactory : ToolWindowFactory, DumbAware {
     }
 
     private fun runAnalysis() {
-        if (thirdPartyMethodPathField.text.isBlank() || thirdPartyMethodPathField.text == "e.g., /path/to/thirdparty/methods") {
+        val thirdPartyPath = if (thirdPartyMethodPathField.text == "e.g., /path/to/thirdparty/methods") "" else thirdPartyMethodPathField.text
+        val projectDir = projectDirectoryField.text
+
+        if (thirdPartyPath.isBlank()) {
             thirdPartyMethodPathWarning.isVisible = true
             outputArea.text = "Error: Third Party Method Path is required."
             return
@@ -242,7 +290,7 @@ class AntiPatternToolWindowFactory : ToolWindowFactory, DumbAware {
             thirdPartyMethodPathWarning.isVisible = false
         }
 
-        if (projectDirectoryField.text.isBlank()) {
+        if (projectDir.isBlank()) {
             projectPathWarning.isVisible = true
             outputArea.text = "Error: Project Path is required."
             return
@@ -277,11 +325,17 @@ class AntiPatternToolWindowFactory : ToolWindowFactory, DumbAware {
 
     private fun createConfigContent(): String {
         val threshold = methodExecutionThresholdField.text.toIntOrNull() ?: 2000
+
+        val projectDir = if (projectDirectoryField.text == "e.g., /path/to/your/project") "" else projectDirectoryField.text
+        val thirdPartyPaths = if (thirdPartyMethodPathField.text == "e.g., /path/to/thirdparty/methods") emptyList() else thirdPartyMethodPathField.text.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+        val exclusions = if (exclusionsField.text == "e.g., com.example.*, org.test.*") emptyList() else exclusionsField.text.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+        val snapshotCsvFilePath = if (snapshotCsvFilePathField.text == "e.g., /path/to/snapshot.csv") "" else snapshotCsvFilePathField.text
+
         val config = mapOf(
-            "projectDirectory" to projectDirectoryField.text,
-            "thirdPartyMethodPaths" to listOf(thirdPartyMethodPathField.text),
-            "exclusions" to exclusionsField.text.split(",").map { it.trim() }.filter { it.isNotEmpty() },
-            "snapshotCsvFilePath" to snapshotCsvFilePathField.text,
+            "projectDirectory" to projectDir,
+            "thirdPartyMethodPaths" to thirdPartyPaths,
+            "exclusions" to exclusions,
+            "snapshotCsvFilePath" to snapshotCsvFilePath,
             "methodExecutionThresholdMs" to threshold
         )
         return ObjectMapper().writeValueAsString(config)
@@ -335,7 +389,7 @@ class AntiPatternToolWindowFactory : ToolWindowFactory, DumbAware {
     private fun displayResults(jsonString: String) {
         val jsonArray = JSONArray(jsonString)
         val htmlBuilder = StringBuilder()
-        htmlBuilder.append("<html><body style='font-family: Arial, sans-serif;'>")
+        htmlBuilder.append("<html><body style='font-family: Arial, sans-serif; padding: 20px;'>")
         htmlBuilder.append("<h2>Anti-Pattern Analysis Results</h2>")
 
         for ((index, item) in jsonArray.withIndex()) {
@@ -368,7 +422,8 @@ class AntiPatternToolWindowFactory : ToolWindowFactory, DumbAware {
         val line = params.find { it.startsWith("line=") }?.substringAfter("=")?.toIntOrNull()
 
         if (filePath != null && line != null) {
-            val virtualFile = LocalFileSystem.getInstance().findFileByPath(project.basePath + "/src/main/java/$filePath.java")
+            val virtualFile =
+                LocalFileSystem.getInstance().findFileByPath(project.basePath + "/src/main/java/$filePath.java")
             if (virtualFile != null) {
                 val fileEditorManager = FileEditorManager.getInstance(project)
                 fileEditorManager.openFile(virtualFile, true)
