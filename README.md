@@ -1,4 +1,6 @@
-# Anti-Pattern-Analysis
+# Anti-Pattern-Analysis [![.github/workflows/tool-package.yaml](https://github.com/DigitalProductInnovationAndDevelopment/Anti-Pattern-Analysis/actions/workflows/tool-package.yaml/badge.svg)](https://github.com/DigitalProductInnovationAndDevelopment/Anti-Pattern-Analysis/actions/workflows/tool-package.yaml) [![IntelliJ Plugin CI](https://github.com/DigitalProductInnovationAndDevelopment/Anti-Pattern-Analysis/actions/workflows/plugin-ci.yml/badge.svg)](https://github.com/DigitalProductInnovationAndDevelopment/Anti-Pattern-Analysis/actions/workflows/plugin-ci.yml)
+
+
 
 <img align="left" src="https://github.com/DigitalProductInnovationAndDevelopment/Anti-Pattern-Analysis/assets/58306766/dfb0b129-83c0-42fd-852b-778c87da46b8" alt="image" width=15% height=15%/>
 
