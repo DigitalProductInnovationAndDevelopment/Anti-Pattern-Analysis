@@ -42,12 +42,12 @@ jobs:
       - name: Run Tests and Generate Coverage
         run: |
           cd plugin
-          ./gradlew test jacocoTestReport
+          ./gradlew test koverHtmlReport
       - name: Upload Coverage Report
         uses: actions/upload-artifact@v3
         with:
           name: coverage-report
-          path: build/reports/jacoco
+          path: build/reports/kover
 
   changelog:
     name: Changelog
