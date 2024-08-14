@@ -61,6 +61,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           output-file: false
           version-file: .github/versions/tool-package.yaml
+          tag-prefix: 'plugin-v'
           skip-on-empty: false
 
   release:
