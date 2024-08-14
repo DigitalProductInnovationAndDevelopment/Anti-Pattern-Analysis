@@ -51,3 +51,62 @@ This project aims to provide tools and methodologies for identifying and address
    ```
    
 9. Run the analysis
+
+## Development Guidelines
+
+### Branching Strategy
+
+- **For Tool development**: branch from and merge into the `tool` branch
+- **For Plugin development**: branch from and merge into the `plugin` branch
+- Use descriptive branch names, e.g., `feature/fehmi-tool-new-detector` or `bugfix/name-plugin-ui-crash`
+
+### Commit Messages
+
+Follow the [Conventional Commits](https://www.conventionalcommits.org/) specification to aid in automatic changelog generation and versioning.
+
+### Pull Requests
+
+1. Create a Pull Request (PR) when your feature or fix is ready for review
+2. Ensure all tests pass and code meets the project's quality standards
+3. Request reviews from team members
+
+## CI/CD Pipeline
+
+GitHub Actions will automatically run on your PR, checking build status, tests, and generating coverage reports. Review the CI/CD output in your PR before merging. The workflows are defined in `.github/workflows/`.
+
+### Tool CI Workflow
+
+- Triggered on pushes and PRs to the `tool` branch
+- Builds the project, runs tests, and generates a coverage report
+- Creates a release with changelog on merge to `tool`
+
+### Plugin CI Workflow
+
+- Triggered on pushes and PRs to the `plugin` branch
+- Builds the plugin, runs tests, and generates a coverage report
+- Creates a release with changelog on merge to `plugin`
+
+
+### Coverage Reports
+
+Coverage reports are generated as artifacts in GitHub Actions. Test cases and execution of test cases can be seen here too. To view a coverage report:
+
+1. Go to the Actions tab in the GitHub repository
+2. Select the relevant workflow run
+3. Scroll down to the Artifacts section
+4. Download the `coverage-report` artifact
+
+### Releases
+
+- Tool Releases: [Tool Releases](https://github.com/DigitalProductInnovationAndDevelopment/Anti-Pattern-Analysis/releases?q=tool)
+- Plugin Releases: [Plugin Releases](https://github.com/DigitalProductInnovationAndDevelopment/Anti-Pattern-Analysis/releases?q=plugin)
+
+## Versioning
+
+- The Tool and Plugin are versioned independently
+- Version files:
+  - Tool: `.github/tool-version.yaml`
+  - Plugin: `.github/plugin-version.yaml`
+- Versions follow [Semantic Versioning](https://semver.org/)
+
+
