@@ -47,7 +47,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: coverage-report
-          path: build/reports/kover
+          path: build/reports/kover/html/index.html
 
   changelog:
     name: Changelog
