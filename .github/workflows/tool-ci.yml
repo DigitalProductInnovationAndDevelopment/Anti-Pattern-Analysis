@@ -60,7 +60,7 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           output-file: false
-          version-file: .github/tool-package.yaml
+          version-file: .github/versions/tool-package.yaml
           skip-on-empty: false
 
   release:

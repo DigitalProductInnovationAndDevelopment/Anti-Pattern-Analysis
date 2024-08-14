@@ -69,7 +69,7 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           output-file: false
-          version-file: .github/plugin-package.yaml
+          version-file: .github/versions/plugin-package.yaml
           skip-on-empty: false
 
   release:
