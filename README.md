@@ -30,7 +30,7 @@ This project aims to provide tools and methodologies for identifying and address
 
 6. Add the created plugin to your IDE following [IntelliJ documentation](https://www.jetbrains.com/help/idea/managing-plugins.html#install_plugin_from_disk)
 
-7. (Optional) Generate monitoring(or sampling) data for dynamic analysis [Sampling documentation](https://softwaredoug.com/blog/2023/10/15/visualvm-flamegraphs)
+7. (Optional) Generate monitoring(or sampling) data for dynamic analysis [Sampling documentation](docs/sampling.md)
 
 8. Open the plugin tab and provide the config<br>
    ### Configuration variables
