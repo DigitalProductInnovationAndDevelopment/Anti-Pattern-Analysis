@@ -1,4 +1,4 @@
-# Anti-Pattern-Analysis [![IntelliJ Plugin CI](https://github.com/DigitalProductInnovationAndDevelopment/Anti-Pattern-Analysis/actions/workflows/plugin-ci.yml/badge.svg)](https://github.com/DigitalProductInnovationAndDevelopment/Anti-Pattern-Analysis/actions/workflows/plugin-ci.yml)
+# Anti-Pattern-Analysis [![IntelliJ Plugin CI](https://github.com/DigitalProductInnovationAndDevelopment/Anti-Pattern-Analysis/actions/workflows/plugin-ci.yml/badge.svg?branch=plugin)](https://github.com/DigitalProductInnovationAndDevelopment/Anti-Pattern-Analysis/actions/workflows/plugin-ci.yml) - [![IntelliJ Plugin CI](https://github.com/DigitalProductInnovationAndDevelopment/Anti-Pattern-Analysis/actions/workflows/plugin-ci.yml/badge.svg?branch=tool)](https://github.com/DigitalProductInnovationAndDevelopment/Anti-Pattern-Analysis/actions/workflows/plugin-ci.yml)
 
 Welcome to the Anti-Pattern Analysis in Code Bases project!
 
