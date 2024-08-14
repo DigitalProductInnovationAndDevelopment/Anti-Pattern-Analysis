@@ -110,5 +110,5 @@ jobs:
             </details>
           prerelease: false
           draft: false
-          files: build/distributions/${{ env.PLUGIN_NAME }}*.zip
+          files: build/distributions/${{ env.PLUGIN_NAME }}.zip
           generate_release_notes: true
