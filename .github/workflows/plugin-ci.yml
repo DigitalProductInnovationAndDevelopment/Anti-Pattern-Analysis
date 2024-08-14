@@ -30,9 +30,6 @@ jobs:
         with:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: 'adopt'
-          cache: 'gradle'
-          cache-dependency-path: | # optional
-            plugin/*.gradle*
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2
         with:
