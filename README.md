@@ -51,3 +51,27 @@ This project aims to provide tools and methodologies for identifying and address
    ```
    
 9. Run the analysis
+
+## Development Guidelines
+
+### Branching Strategy
+
+- **For Tool development**: branch from and merge into the `tool` branch
+- **For Plugin development**: branch from and merge into the `plugin` branch
+- Use descriptive branch names, e.g., `feature/fehmi-tool-new-detector` or `bugfix/name-plugin-ui-crash`
+
+### Commit Messages
+
+Follow the [Conventional Commits](https://www.conventionalcommits.org/) specification to aid in automatic changelog generation and versioning.
+
+### Pull Requests
+
+1. Create a Pull Request (PR) when your feature or fix is ready for review
+2. Ensure all tests pass and code meets the project's quality standards
+3. Request reviews from team members
+
+### CI/CD Pipeline
+
+GitHub Actions will automatically run on your PR, checking build status, tests, and generating coverage reports. Review the CI/CD output in your PR before merging.
+
+
